@@ -1,4 +1,14 @@
+import inspect
+
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import migrations, models
+
+
+def rating_constraint():
+    check = models.Q(rating__gte=1, rating__lte=5)
+    if 'condition' in inspect.signature(models.CheckConstraint).parameters:
+        return models.CheckConstraint(condition=check, name='review_rating_range')
+    return models.CheckConstraint(check=check, name='review_rating_range')
 
 
 REVIEWS = [
@@ -43,7 +53,7 @@ class Migration(migrations.Migration):
             name='ProductReview',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('rating', models.PositiveSmallIntegerField(verbose_name='Оценка')),
+                ('rating', models.PositiveSmallIntegerField(validators=[MinValueValidator(1), MaxValueValidator(5)], verbose_name='Оценка')),
                 ('text', models.TextField(verbose_name='Текст')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='Дата')),
                 ('author', models.ForeignKey(on_delete=models.deletion.CASCADE, related_name='product_reviews', to='Catalog.user', verbose_name='Автор')),
@@ -61,7 +71,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='productreview',
-            constraint=models.CheckConstraint(condition=models.Q(rating__gte=1, rating__lte=5), name='review_rating_range'),
+            constraint=rating_constraint(),
         ),
         migrations.RunPython(seed_reviews, migrations.RunPython.noop),
     ]

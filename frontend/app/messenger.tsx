@@ -282,7 +282,7 @@ export function Messenger({
                 type="button"
                 onClick={() => openDialog(dialog.id)}
                 className={`block w-full px-4 py-3 text-left ${
-                  dialog.id === thread.id ? "bg-[#F3F3F3]" : "hover:bg-[#F7F7F7]"
+                  dialog.id === thread?.id ? "bg-[#F3F3F3]" : "hover:bg-[#F7F7F7]"
                 }`}
               >
                 <span className="block text-sm font-light">{dialog.with_name}</span>

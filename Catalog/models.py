@@ -1,6 +1,16 @@
+import inspect
+
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
+
+
+def review_rating_constraint():
+    check = models.Q(rating__gte=1, rating__lte=5)
+    if 'condition' in inspect.signature(models.CheckConstraint).parameters:
+        return models.CheckConstraint(condition=check, name='review_rating_range')
+    return models.CheckConstraint(check=check, name='review_rating_range')
 
 
 # =========================
@@ -450,6 +460,7 @@ class ProductReview(models.Model):
     )
 
     rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
         verbose_name='Оценка'
     )
 
@@ -471,10 +482,7 @@ class ProductReview(models.Model):
                 fields=['product', 'author'],
                 name='unique_product_review',
             ),
-            models.CheckConstraint(
-                condition=models.Q(rating__gte=1, rating__lte=5),
-                name='review_rating_range',
-            ),
+            review_rating_constraint(),
         ]
 
     def __str__(self):
