@@ -36,6 +36,7 @@ export function Hero() {
       return;
     }
     video.muted = true;
+    video.volume = 0;
     try {
       video.currentTime = 0;
       await video.play();
@@ -66,7 +67,6 @@ export function Hero() {
           src="/hero.mp4"
           poster="/hero.jpg"
           muted
-          volume={0}
           playsInline
           preload="auto"
           className="absolute inset-0 h-full w-full object-cover object-[72%_center]"
