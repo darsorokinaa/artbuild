@@ -6,6 +6,7 @@ function forwardHeaders(request: NextRequest) {
   return {
     "Content-Type": "application/json",
     "X-User": request.headers.get("x-user") ?? "",
+    Authorization: request.headers.get("authorization") ?? "",
   };
 }
 

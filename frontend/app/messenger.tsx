@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useAccount } from "./account-provider";
 import { getImageUrl } from "./media-url";
 
 type DialogItem = {
@@ -41,14 +42,12 @@ type ProductDraft = {
   dialogId: number;
 };
 
-const currentUserId = 4;
-
-async function talk(path: string, init?: RequestInit) {
+async function talk(path: string, token: string, init?: RequestInit) {
   return fetch(path, {
     ...init,
     headers: {
       "Content-Type": "application/json",
-      "X-User": String(currentUserId),
+      Authorization: token ? `Bearer ${token}` : "",
       ...(init?.headers ?? {}),
     },
   });
@@ -70,7 +69,7 @@ export function ContactAuthor({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-6 bg-[#1A1A1A] px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] text-white"
+        className="mt-4 rounded-full bg-[#1A1A1A] px-4 py-2 text-[13px] text-white"
       >
         Связаться с автором
       </button>
@@ -117,6 +116,7 @@ export function Messenger({
   authorName?: string;
   onClose: () => void;
 }) {
+  const { token, ready } = useAccount();
   const [thread, setThread] = useState<Thread | null>(null);
   const [text, setText] = useState("");
   const [draft, setDraft] = useState<ProductDraft | null>(null);
@@ -139,13 +139,21 @@ export function Messenger({
   }, [onClose]);
 
   useEffect(() => {
+    if (!ready) {
+      return;
+    }
+    if (!token) {
+      setThread(null);
+      setError("Войдите, чтобы открыть диалоги.");
+      return;
+    }
     let ignore = false;
     const request = productId
-      ? talk("/api/conversations", {
+      ? talk("/api/conversations", token, {
           method: "POST",
           body: JSON.stringify({ product_id: productId }),
         })
-      : talk("/api/conversations");
+      : talk("/api/conversations", token);
     request
       .then(async (response) => {
         if (!response.ok) {
@@ -177,7 +185,7 @@ export function Messenger({
           });
           return;
         }
-        const thread = await talk(`/api/conversations/${first.id}`);
+        const thread = await talk(`/api/conversations/${first.id}`, token);
         if (!ignore && thread.ok) {
           setThread(await thread.json());
         }
@@ -190,7 +198,7 @@ export function Messenger({
     return () => {
       ignore = true;
     };
-  }, [productId]);
+  }, [productId, ready, token]);
 
   async function openDialog(id: number) {
     setError("");
@@ -198,7 +206,7 @@ export function Messenger({
     if (kept && kept !== draft) {
       setDraft(kept);
     }
-    const response = await talk(`/api/conversations/${id}`);
+    const response = await talk(`/api/conversations/${id}`, token);
     if (!response.ok) {
       setError("Диалог не открылся.");
       return;
@@ -217,7 +225,7 @@ export function Messenger({
     setError("");
     try {
       const withDraft = draft && thread.id === draft.dialogId;
-      const response = await talk(`/api/conversations/${thread.id}`, {
+      const response = await talk(`/api/conversations/${thread.id}`, token, {
         method: "POST",
         body: JSON.stringify({
           text: message,

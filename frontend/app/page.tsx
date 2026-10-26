@@ -1,16 +1,15 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
-import { ContactAuthor } from "./messenger";
-import { ProductName, ViewProduct, type ProductCardData } from "./product-card";
+import { ProductTile, type ProductCardData } from "./product-card";
 import { getImageUrl } from "./media-url";
-import { MastersWindow, StageFallback } from "./masters-window";
+import { Hero } from "./hero";
+import { loadMasters } from "./masters-window";
 import { SiteShell } from "./site-shell";
 
 export const metadata: Metadata = {
-  title: "ArtBuild — Каталог мастеров",
-  description:
-    "Галерея профессионалов ArtBuild: работы мастеров, профили и подборки реализованных проектов.",
+  title: "blurrr",
+  description: "Изделия и мастера: оставьте задание или покажите свои работы.",
 };
 
 type Master = {
@@ -40,63 +39,12 @@ const workImages = [
   "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=1600&q=80",
 ];
 
-const collections = [
-  {
-    title: "Жилые интерьеры",
-    note: "Свет и пропорции",
-    src: "https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?auto=format&fit=crop&w=1800&q=80",
-    frame: "lg:col-span-7",
-    image: "aspect-[5/4] w-full object-cover sm:aspect-[16/10]",
-  },
-  {
-    title: "Предметы и мебель",
-    note: "Столярные работы",
-    src: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=1400&q=80",
-    frame: "lg:col-span-5",
-    image: "aspect-[5/4] w-full object-cover lg:aspect-[4/5]",
-  },
-  {
-    title: "Камень и свет",
-    note: "Реализованные проекты",
-    src: "https://images.unsplash.com/photo-1600566752355-35792bedcfea?auto=format&fit=crop&w=1800&q=80",
-    frame: "lg:col-span-12",
-    image: "aspect-[4/5] w-full object-cover lg:aspect-[16/9] lg:object-[center_42%]",
-  },
-];
-
-const focusRing =
-  "focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#1A1A1A]";
-
 function imageFor(master: Master, index: number) {
   if (master.image) {
     return master.image;
   }
 
   return workImages[index % workImages.length];
-}
-
-function priceFor(master: Master) {
-  const price = master.price?.trim();
-  return price ? price : "По запросу";
-}
-
-function indexLabel(index: number) {
-  return String(index + 1).padStart(2, "0");
-}
-
-function countLabel(count: number) {
-  const mod10 = count % 10;
-  const mod100 = count % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return `${count} товар`;
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return `${count} товара`;
-  }
-
-  return `${count} товаров`;
 }
 
 function WorkImage({
@@ -130,70 +78,24 @@ function productCard(master: Master, image?: string): ProductCardData {
   };
 }
 
-function MasterLabel({
-  master,
-  index,
-  image,
-}: {
-  master: Master;
-  index: number;
-  image?: string;
-}) {
-  const card = productCard(master, image);
-  return (
-    <figcaption className="mt-4">
-      <div className="flex items-baseline justify-between gap-4">
-        <ProductName product={card} className="text-lg font-light hover:underline" />
-        <p className="shrink-0 text-[11px] uppercase tracking-[0.22em]">{indexLabel(index)}</p>
-      </div>
-      <div className="mt-3 flex items-center gap-3">
-        {master.avatar ? (
-          <img
-            src={getImageUrl(master.avatar)}
-            alt=""
-            className="h-8 w-8 shrink-0 bg-[#E6E4DF] object-cover object-top"
-          />
-        ) : null}
-        <p className="text-sm">{master.specialization}</p>
-      </div>
-      {master.work ? <p className="mt-1 text-sm">{master.work}</p> : null}
-      <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-[#E6E4DF] pt-3 text-sm">
-        <p className="text-[#1A1A1A]/70">{master.city}</p>
-        <p className="shrink-0 text-[11px] uppercase tracking-[0.16em]">{priceFor(master)}</p>
-      </div>
-      <div className="flex flex-wrap gap-3">
-        <ViewProduct product={card} />
-        {master.sellerId ? (
-          <ContactAuthor productId={master.id} productTitle={master.name} authorName={master.specialization} />
-        ) : null}
-      </div>
-    </figcaption>
-  );
-}
-
 function CatalogGrid({ masters }: { masters: Master[] }) {
   return (
-    <section
-      id="catalog"
-      className="scroll-mt-28 border-t border-[#E6E4DF] px-6 py-16 md:px-12 md:py-20 lg:px-16"
-    >
-      <div className="mb-14 flex items-baseline justify-between gap-6">
-        <h2 className="text-4xl font-light tracking-tight">Каталог</h2>
-        <p className="text-[11px] uppercase tracking-[0.22em]">{countLabel(masters.length)}</p>
+    <section id="catalog" className="scroll-mt-28 px-5 py-16 md:px-8 md:py-20">
+      <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-[#1A1A1A]/45">Каталог</p>
+          <h2 className="mt-3 max-w-xl font-[family-name:var(--font-display)] text-4xl font-medium leading-tight md:text-5xl">
+            Изделия
+          </h2>
+        </div>
+        <a href="/products" className="text-sm text-[#1A1A1A]/70 hover:text-[#1A1A1A]">
+          Все изделия →
+        </a>
       </div>
-      <ul
-        className={`grid grid-cols-1 gap-x-8 gap-y-16 md:grid-cols-2 ${masters.length > 2 ? "xl:grid-cols-3" : ""}`}
-      >
+      <ul className="columns-1 gap-x-5 sm:columns-2 xl:columns-3">
         {masters.map((master, index) => (
-          <li key={master.id}>
-            <figure>
-              <WorkImage
-                src={imageFor(master, index)}
-                alt={[master.name, master.specialization, master.city].filter(Boolean).join(", ")}
-                className="aspect-[4/3] w-full object-cover object-center"
-              />
-              <MasterLabel master={master} index={index} image={imageFor(master, index)} />
-            </figure>
+          <li key={master.id} className="mb-5 break-inside-avoid">
+            <ProductTile product={productCard(master, imageFor(master, index))} />
           </li>
         ))}
       </ul>
@@ -205,9 +107,9 @@ function CatalogNotice({ children }: { children: ReactNode }) {
   return (
     <section
       id="catalog"
-      className="scroll-mt-28 border-t border-[#E6E4DF] px-6 py-16 md:px-12 lg:px-16"
+      className="scroll-mt-28 px-5 py-16 md:px-8"
     >
-      <h2 className="text-4xl font-light tracking-tight">Каталог</h2>
+      <h2 className="font-[family-name:var(--font-display)] text-4xl font-medium">Изделия</h2>
       <p className="mt-6 max-w-md text-sm leading-relaxed">{children}</p>
     </section>
   );
@@ -215,8 +117,8 @@ function CatalogNotice({ children }: { children: ReactNode }) {
 
 function CatalogFallback() {
   return (
-    <section className="border-t border-[#E6E4DF] px-6 py-16 md:px-12 lg:px-16">
-      <h2 className="text-4xl font-light tracking-tight">Каталог</h2>
+    <section className="px-5 py-16 md:px-8">
+      <h2 className="font-[family-name:var(--font-display)] text-4xl font-medium">Изделия</h2>
       <div className="mt-14 grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
         <div className="aspect-[4/3] bg-white" />
         <div className="hidden aspect-[4/3] bg-white md:block" />
@@ -278,71 +180,148 @@ async function MasterCatalog() {
   );
 
   if (catalog.length === 0) {
-    return <CatalogNotice>В каталоге пока нет товаров.</CatalogNotice>;
+    return <CatalogNotice>Изделий пока нет.</CatalogNotice>;
   }
 
   return <CatalogGrid masters={catalog} />;
 }
 
-function Collections() {
+function CategoryRow({
+  works,
+}: {
+  works: { id: number; image?: string; label: string }[];
+}) {
+  const cards = works.filter((work) => work.image).slice(0, 4);
+  if (cards.length === 0) {
+    return null;
+  }
   return (
-    <section id="projects" className="scroll-mt-28 bg-white px-6 py-20 md:px-12 md:py-28 lg:px-16">
-      <div className="mb-14 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-[11px] uppercase tracking-[0.28em]">Подборки</p>
-          <h2 className="mt-4 text-4xl font-light tracking-tight md:text-5xl">Проекты</h2>
-        </div>
-        <p className="max-w-xs text-sm leading-relaxed">
-          Интерьеры и реализованные проекты.
-        </p>
+    <section id="masters" className="scroll-mt-28 px-5 py-8 md:px-8">
+      <div className="mb-6 flex items-end justify-between gap-6">
+        <h2 className="font-[family-name:var(--font-display)] text-4xl font-medium">Мастера</h2>
+        <a href="/masters" className="text-sm text-[#1A1A1A]/70 hover:text-[#1A1A1A]">
+          Все мастера →
+        </a>
       </div>
-      <div className="grid grid-cols-1 gap-x-8 gap-y-14 lg:grid-cols-12">
-        {collections.map((item) => (
-          <article key={item.title} className={item.frame}>
-            <WorkImage src={item.src} alt={item.title} className={item.image} />
-            <div className="mt-4 flex items-baseline justify-between gap-4">
-              <h3 className="text-xl font-light">{item.title}</h3>
-              <p className="text-[11px] uppercase tracking-[0.16em]">{item.note}</p>
-            </div>
-          </article>
+      <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {cards.map((work) => (
+          <li key={work.id}>
+            <a href="/masters" className="group block">
+              <WorkImage
+                src={work.image ?? ""}
+                alt={work.label}
+                className="aspect-[16/10] w-full rounded-2xl object-cover"
+              />
+              <span className="mt-3 flex items-center justify-between gap-3 text-sm">
+                <span className="truncate">{work.label}</span>
+                <span className="text-[#1A1A1A]/40 transition-transform group-hover:translate-x-0.5">→</span>
+              </span>
+            </a>
+          </li>
         ))}
+      </ul>
+    </section>
+  );
+}
+
+const steps = [
+  ["01", "Опишите задание"],
+  ["02", "Выберите мастера"],
+  ["03", "Подберите изделие"],
+  ["04", "Дождитесь работы"],
+];
+
+function CustomerPath({ images }: { images: string[] }) {
+  const photos = [...images.filter(Boolean), ...workImages].slice(0, 4);
+  return (
+    <section className="px-3 pb-8 md:px-5">
+      <div className="grid items-center gap-10 rounded-[28px] bg-white px-6 py-10 md:grid-cols-2 md:px-12 md:py-14">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-[#1A1A1A]/45">Заказчикам</p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium leading-tight md:text-5xl">
+            Задание
+          </h2>
+          <p className="mt-4 max-w-md text-sm leading-6 text-[#1A1A1A]/65">
+            Опишите, что нужно сделать. Мастера увидят задание и предложат свои изделия.
+          </p>
+          <a href="/register?kind=customer" className="mt-8 inline-block rounded-full bg-[#1A1A1A] px-5 py-3 text-sm text-white">
+            Оставить задание →
+          </a>
+        </div>
+        <ol className="grid grid-cols-2 gap-3">
+          {steps.map(([number, label], index) => (
+            <li key={number} className="relative overflow-hidden rounded-2xl">
+              <img src={getImageUrl(photos[index])} alt="" className="aspect-[4/3] w-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+              <div className="absolute inset-x-3 bottom-3 text-white">
+                <p className="text-[11px] tracking-[0.16em] text-white/70">{number}</p>
+                <p className="mt-1 text-sm leading-5">{label}</p>
+              </div>
+            </li>
+          ))}
+        </ol>
       </div>
     </section>
   );
 }
 
-function RequestBand() {
+function MastersPath() {
   return (
-    <section id="request" className="scroll-mt-28 px-6 py-20 md:px-12 md:py-28 lg:px-16">
-      <div className="grid grid-cols-1 items-end gap-10 border-t border-[#E6E4DF] pt-12 lg:grid-cols-12">
-        <p className="text-[11px] uppercase tracking-[0.28em] lg:col-span-3">Заявка</p>
-        <p className="text-4xl font-light leading-tight tracking-tight md:text-5xl lg:col-span-6">
-          Обсудите проект с мастером из каталога.
-        </p>
-        <div className="lg:col-span-3 lg:text-right">
-          <a
-            href="#catalog"
-            className={`inline-block border border-[#1A1A1A] px-6 py-3 text-[11px] uppercase tracking-[0.2em] transition-colors hover:bg-[#1A1A1A] hover:text-white ${focusRing}`}
-          >
-            К каталогу
-          </a>
+    <section className="px-3 pb-8 md:px-5">
+      <div className="rounded-[28px] bg-white px-6 py-10 md:flex md:items-end md:justify-between md:px-12 md:py-14">
+        <div>
+          <p className="text-[11px] uppercase tracking-[0.22em] text-[#1A1A1A]/45">Мастерам</p>
+          <h2 className="mt-3 font-[family-name:var(--font-display)] text-4xl font-medium leading-tight md:text-5xl">
+            Для мастеров
+          </h2>
+          <p className="mt-4 max-w-md text-sm leading-6 text-[#1A1A1A]/65">
+            Добавьте портфолио и изделия. Заказчики найдут вас и оставят задание.
+          </p>
         </div>
+        <a href="/register?kind=master" className="mt-8 inline-block rounded-full bg-[#1A1A1A] px-5 py-3 text-sm text-white md:mt-0">
+          Стать мастером →
+        </a>
       </div>
     </section>
+  );
+}
+
+function HomeFallback() {
+  return (
+    <div className="px-3 pt-2">
+      <div className="min-h-[70vh] rounded-[28px] bg-[#E7E1D8]" />
+    </div>
+  );
+}
+
+async function HomePage() {
+  const gallery = await loadMasters();
+  const works = gallery ?? [];
+  return (
+    <>
+      <Hero />
+      <CategoryRow
+        works={works.map((work) => ({
+          id: work.id,
+          image: work.image,
+          label: work.title || work.role,
+        }))}
+      />
+      <Suspense fallback={<CatalogFallback />}>
+        <MasterCatalog />
+      </Suspense>
+      <CustomerPath images={works.map((work) => work.image).filter((image): image is string => Boolean(image))} />
+      <MastersPath />
+    </>
   );
 }
 
 export default function Home() {
   return (
     <SiteShell>
-      <Suspense fallback={<StageFallback />}>
-        <MastersWindow />
+      <Suspense fallback={<HomeFallback />}>
+        <HomePage />
       </Suspense>
-      <Suspense fallback={<CatalogFallback />}>
-        <MasterCatalog />
-      </Suspense>
-      <Collections />
-      <RequestBand />
     </SiteShell>
   );
 }

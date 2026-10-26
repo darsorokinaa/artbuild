@@ -50,10 +50,10 @@ export async function ProductsCatalog() {
     <section className="px-6 py-12 md:px-12 md:py-16 lg:px-16">
       <p className="text-[11px] font-light uppercase tracking-[0.32em] text-[#1A1A1A]/55">Каталог</p>
       <h1 className="mt-6 font-[family-name:var(--font-display)] text-7xl font-light leading-none tracking-tight md:text-8xl">
-        Товары
+        Изделия
       </h1>
       {products.length === 0 ? (
-        <p className="mt-16 text-sm font-light leading-7">Товаров пока нет.</p>
+        <p className="mt-16 text-sm font-light leading-7">Изделий пока нет.</p>
       ) : (
         <ProductsCatalogList products={products} />
       )}

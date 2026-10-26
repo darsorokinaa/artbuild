@@ -170,9 +170,9 @@ export function MasterProfileBody({
         )}
       </section>
       <section className="mt-20">
-        <h2 className={`${display} text-5xl font-light leading-none md:text-6xl`}>Товары</h2>
+        <h2 className={`${display} text-5xl font-light leading-none md:text-6xl`}>Изделия</h2>
         {products.length === 0 ? (
-          <p className="mt-8 text-sm font-light leading-7">Товаров пока нет.</p>
+          <p className="mt-8 text-sm font-light leading-7">Изделий пока нет.</p>
         ) : (
           <div className="mt-8">
             {products.map((product) => {

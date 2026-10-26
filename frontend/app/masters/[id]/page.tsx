@@ -100,7 +100,7 @@ export async function generateMetadata({
   const { id } = await params;
   const master = await loadMaster(id);
   return {
-    title: master?.name ? `ArtBuild — ${master.name}` : "ArtBuild — Мастер",
+    title: master?.name ? `blurrr — ${master.name}` : "blurrr — Мастер",
   };
 }
 

@@ -176,6 +176,54 @@ export function ProductName({
   );
 }
 
+function cardPrice(price?: string) {
+  const formatted = priceFor(price);
+  return formatted === "По запросу" ? formatted : formatted.replace("₽", "р");
+}
+
+export function ProductTile({ product, uniform = false }: { product: ProductCardData; uniform?: boolean }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)} className="relative block w-full text-left">
+        {product.image ? (
+          <img
+            src={getImageUrl(product.image)}
+            alt=""
+            className={`${uniform ? "aspect-square object-cover object-center" : "block h-auto rounded-2xl"} w-full bg-[#E6E4DF]`}
+          />
+        ) : (
+          <span className={`${uniform ? "aspect-square" : "h-56 rounded-2xl"} block w-full bg-[#E6E4DF]`} />
+        )}
+        {uniform ? (
+          <span className="mt-3 block text-[15px] leading-5 text-[#1A1A1A]">
+            <span className="flex items-baseline justify-between gap-3 sm:hidden">
+              <span>{product.seller}</span>
+              <span className="shrink-0">{cardPrice(product.price)}</span>
+            </span>
+            <span className="mt-1 block text-center font-medium italic sm:hidden">"{product.title}"</span>
+            <span className="hidden grid-cols-[1fr_auto_1fr] items-baseline gap-3 sm:grid">
+              <span className="truncate">{product.seller}</span>
+              <span className="max-w-[14rem] truncate text-center font-medium italic">"{product.title}"</span>
+              <span className="text-right">{cardPrice(product.price)}</span>
+            </span>
+          </span>
+        ) : (
+          <span className="absolute inset-x-0 bottom-0 rounded-b-2xl bg-gradient-to-t from-black/70 via-black/25 to-transparent px-4 pb-4 pt-16 text-white">
+            {product.seller ? <span className="block text-[13px] text-white/75">{product.seller}</span> : null}
+            <span className="mt-1 block font-[family-name:var(--font-display)] text-[1.65rem] leading-tight">
+              {product.title}
+              <span className="text-white/80"> · {priceFor(product.price)}</span>
+            </span>
+          </span>
+        )}
+      </button>
+      {open ? <ProductDialog product={product} onClose={() => setOpen(false)} /> : null}
+    </>
+  );
+}
+
 export function ViewProduct({ product }: { product: ProductCardData }) {
   const [open, setOpen] = useState(false);
 
@@ -184,7 +232,7 @@ export function ViewProduct({ product }: { product: ProductCardData }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-6 border border-[#1A1A1A] bg-white px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] text-[#1A1A1A]"
+        className="mt-4 rounded-full border border-[#1A1A1A]/15 bg-white px-4 py-2 text-[13px] text-[#1A1A1A]"
       >
         Смотреть
       </button>

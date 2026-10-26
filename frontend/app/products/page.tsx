@@ -4,8 +4,8 @@ import { ProductsCatalog } from "../products-window";
 import { SiteShell } from "../site-shell";
 
 export const metadata: Metadata = {
-  title: "ArtBuild — Товары",
-  description: "Каталог товаров ArtBuild.",
+  title: "blurrr — Изделия",
+  description: "Каталог изделий blurrr.",
 };
 
 export default function ProductsPage() {
