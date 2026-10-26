@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { getImageUrl } from "./media-url";
 
 export type CatalogProduct = {
   id: number;
@@ -97,7 +98,7 @@ export function ProductsCatalogList({ products }: { products: CatalogProduct[] }
             <article key={product.id}>
               {product.image ? (
                 <img
-                  src={product.image}
+                  src={getImageUrl(product.image)}
                   alt={product.title}
                   className="aspect-[5/4] w-full bg-[#E7E1D8] object-cover object-center"
                 />
@@ -109,7 +110,7 @@ export function ProductsCatalogList({ products }: { products: CatalogProduct[] }
               </h2>
               <div className="mt-4 flex items-center gap-3">
                 {product.avatar ? (
-                  <img src={product.avatar} alt="" className="h-8 w-8 bg-[#E7E1D8] object-cover object-top" />
+                  <img src={getImageUrl(product.avatar)} alt="" className="h-8 w-8 bg-[#E7E1D8] object-cover object-top" />
                 ) : null}
                 {product.sellerId ? (
                   <a href={`/masters/${product.sellerId}`} className="text-sm font-light leading-7 hover:underline">

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { MasterProfileBody, type ProfileProduct, type ProfileWork } from "../../master-profile";
+import { getImageUrl } from "../../media-url";
 import { SiteShell } from "../../site-shell";
 
 type MasterProfile = {
@@ -122,7 +123,7 @@ async function MasterProfile({ params }: { params: Promise<{ id: string }> }) {
       <div className="mt-10 flex items-end gap-5">
         {master.avatar ? (
           <img
-            src={master.avatar}
+            src={getImageUrl(master.avatar)}
             alt=""
             className="h-20 w-20 bg-[#E7E1D8] object-cover object-top"
           />

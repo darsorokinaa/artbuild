@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
+import { getImageUrl } from "./media-url";
 import { MastersWindow, StageFallback } from "./masters-window";
 import { SiteShell } from "./site-shell";
 
@@ -102,7 +103,7 @@ function WorkImage({
   className: string;
 }) {
   return (
-    <img src={src} alt={alt} className={`bg-[#E6E4DF] ${className}`} />
+    <img src={getImageUrl(src)} alt={alt} className={`bg-[#E6E4DF] ${className}`} />
   );
 }
 
@@ -122,7 +123,7 @@ function MasterLabel({
       <div className="mt-3 flex items-center gap-3">
         {master.avatar ? (
           <img
-            src={master.avatar}
+            src={getImageUrl(master.avatar)}
             alt=""
             className="h-8 w-8 shrink-0 bg-[#E6E4DF] object-cover object-top"
           />

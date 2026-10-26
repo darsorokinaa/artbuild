@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { getImageUrl } from "./media-url";
 
 export type StagePhoto = {
   src: string;
@@ -46,7 +47,7 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
         <figure className="relative lg:col-span-8">
           {frame ? (
             <img
-              src={frame.src}
+              src={getImageUrl(frame.src)}
               alt={frame.description || current.title || current.owner}
               className="aspect-[4/3] w-full bg-[#E6E4DF] object-cover object-center"
             />
@@ -66,7 +67,7 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
                     itemIndex === photo ? "outline outline-1 outline-white" : "opacity-70"
                   } ${focusRing}`}
                 >
-                  <img src={item.src} alt="" className="h-full w-full object-cover" />
+                  <img src={getImageUrl(item.src)} alt="" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
@@ -76,7 +77,7 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
           <div className="flex items-end gap-4">
             {current.avatar ? (
               <img
-                src={current.avatar}
+                src={getImageUrl(current.avatar)}
                 alt=""
                 className="h-8 w-8 shrink-0 bg-[#E6E4DF] object-cover object-top"
               />

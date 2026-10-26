@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getImageUrl } from "./media-url";
 
 export type ProfilePhoto = {
   src: string;
@@ -85,7 +86,7 @@ function WorkDialog({ work, onClose }: { work: ProfileWork; onClose: () => void 
             {work.images.map((photo) => (
               <figure key={photo.src}>
                 <img
-                  src={photo.src}
+                  src={getImageUrl(photo.src)}
                   alt={photo.description || work.title}
                   className="aspect-[4/3] w-full bg-[#E7E1D8] object-cover object-center"
                 />
@@ -125,7 +126,7 @@ export function MasterProfileBody({
                 <div className="md:col-span-5">
                   {work.image ? (
                     <img
-                      src={work.image}
+                      src={getImageUrl(work.image)}
                       alt={work.title}
                       className="aspect-[5/4] w-full bg-[#E7E1D8] object-cover object-center"
                     />
@@ -170,7 +171,7 @@ export function MasterProfileBody({
                 <div className="md:col-span-5">
                   {product.image ? (
                     <img
-                      src={product.image}
+                      src={getImageUrl(product.image)}
                       alt={product.title}
                       className="aspect-[5/4] w-full bg-[#E7E1D8] object-cover object-center"
                     />

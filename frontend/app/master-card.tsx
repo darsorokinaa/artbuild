@@ -1,3 +1,5 @@
+import { getImageUrl } from "./media-url";
+
 type MasterPhoto = {
   src: string;
   description?: string;
@@ -40,7 +42,7 @@ export function MasterCard({
         <div className="overflow-hidden bg-[#E7E1D8]">
           {primary ? (
             <img
-              src={primary.src}
+              src={getImageUrl(primary.src)}
               alt={primary.description || work || name}
               className="aspect-[5/4] w-full object-cover object-center transition duration-700 ease-out group-hover:scale-[1.04]"
             />
@@ -50,7 +52,7 @@ export function MasterCard({
         </div>
         {secondary ? (
           <img
-            src={secondary.src}
+            src={getImageUrl(secondary.src)}
             alt={secondary.description || ""}
             className="absolute bottom-0 right-6 aspect-[4/3] w-[46%] bg-[#E7E1D8] object-cover object-center shadow-[0_16px_40px_rgba(26,26,26,0.12)] transition duration-700 ease-out group-hover:-translate-y-1"
           />
@@ -59,7 +61,7 @@ export function MasterCard({
       <div className="mt-2 flex items-end gap-4">
         {avatar ? (
           <img
-            src={avatar}
+            src={getImageUrl(avatar)}
             alt=""
             className="h-14 w-14 shrink-0 bg-[#E7E1D8] object-cover object-top"
           />
