@@ -45,7 +45,7 @@ export function ProductsCatalogList({ products }: { products: CatalogProduct[] }
   const [query, setQuery] = useState("");
   const needle = query.trim().toLocaleLowerCase("ru");
   const spheres = useMemo(
-    () => [...new Set(products.map((product) => product.sphere).filter(Boolean))].sort((a, b) => a.localeCompare(b, "ru")),
+    () => [...new Set(products.map((product) => product.sphere).filter(Boolean))].sort((a, b) => (a ?? "").localeCompare(b ?? "", "ru")),
     [products]
   );
   const visible = useMemo(
@@ -68,7 +68,7 @@ export function ProductsCatalogList({ products }: { products: CatalogProduct[] }
               <button
                 key={item}
                 type="button"
-                onClick={() => setSphere(item)}
+                onClick={() => setSphere(item ?? "")}
                 className={`px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] ${
                   active ? "bg-[#1A1A1A] text-[#F6F3EE]" : "text-[#1A1A1A]/70 hover:text-[#1A1A1A]"
                 }`}
