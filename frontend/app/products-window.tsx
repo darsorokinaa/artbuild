@@ -27,6 +27,9 @@ export async function ProductsCatalog() {
       avatar?: string | null;
       image?: string | null;
       sphere?: string | null;
+      production_time?: string | null;
+      rating?: number | null;
+      reviews?: { id: number; author: string; rating: number; text: string }[];
     }) => ({
       id: product.id,
       title: product.title ?? "",
@@ -37,6 +40,9 @@ export async function ProductsCatalog() {
       avatar: product.avatar || undefined,
       image: product.image || undefined,
       sphere: product.sphere || "",
+      productionTime: product.production_time || "",
+      rating: product.rating ?? null,
+      reviews: product.reviews ?? [],
     })
   );
 

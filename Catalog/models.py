@@ -433,3 +433,92 @@ class ProductImage(models.Model):
         return f'Фото товара: {self.product.title}'
 
 
+class ProductReview(models.Model):
+
+    product = models.ForeignKey(
+        Product,
+        on_delete=models.CASCADE,
+        related_name='reviews',
+        verbose_name='Товар'
+    )
+
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='product_reviews',
+        verbose_name='Автор'
+    )
+
+    rating = models.PositiveSmallIntegerField(
+        verbose_name='Оценка'
+    )
+
+    text = models.TextField(
+        verbose_name='Текст'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата'
+    )
+
+    class Meta:
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product', 'author'],
+                name='unique_product_review',
+            ),
+            models.CheckConstraint(
+                condition=models.Q(rating__gte=1, rating__lte=5),
+                name='review_rating_range',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.rating} — {self.product}'
+
+
+class Conversation(models.Model):
+
+    user_one = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='dialogs_as_one',
+        verbose_name='Участник 1'
+    )
+
+    user_two = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='dialogs_as_two',
+        verbose_name='Участник 2'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата начала'
+    )
+
+    messages = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name='Сообщения'
+    )
+
+    class Meta:
+        verbose_name = 'Диалог'
+        verbose_name_plural = 'Диалоги'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user_one', 'user_two'],
+                name='unique_user_pair',
+            )
+        ]
+
+    def __str__(self):
+        return f'Диалог {self.user_one_id} и {self.user_two_id}'
+
+

@@ -12,7 +12,7 @@ const roleLabel: Record<string, string> = {
 export function StageFallback() {
   return (
     <section className="px-6 py-8 md:px-12 lg:px-16">
-      <div className="aspect-[4/3] bg-[#F5F4F0] lg:w-2/3" />
+      <div className="aspect-[4/3] bg-white lg:w-2/3" />
     </section>
   );
 }

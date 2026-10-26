@@ -75,6 +75,8 @@ async function loadMaster(id: string): Promise<MasterProfile | null | undefined>
         image?: string | null;
         sphere?: string;
         production_time?: string;
+        rating?: number | null;
+        reviews?: { id: number; author: string; rating: number; text: string }[];
       }) => ({
         id: product.id,
         title: product.title ?? "",
@@ -83,6 +85,8 @@ async function loadMaster(id: string): Promise<MasterProfile | null | undefined>
         image: product.image || undefined,
         sphere: product.sphere || "",
         productionTime: product.production_time || "",
+        rating: product.rating ?? null,
+        reviews: product.reviews ?? [],
       })
     ),
   };
@@ -140,7 +144,12 @@ async function MasterProfile({ params }: { params: Promise<{ id: string }> }) {
       {master.description ? (
         <p className="mt-8 max-w-2xl text-sm font-light leading-7">{master.description}</p>
       ) : null}
-      <MasterProfileBody portfolios={master.portfolios} products={master.products} />
+      <MasterProfileBody
+        portfolios={master.portfolios}
+        products={master.products}
+        authorName={master.name}
+        authorId={master.id}
+      />
     </article>
   );
 }

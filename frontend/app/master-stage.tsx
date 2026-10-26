@@ -52,7 +52,7 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
               className="aspect-[4/3] w-full bg-[#E6E4DF] object-cover object-center"
             />
           ) : (
-            <div className="aspect-[4/3] bg-[#F5F4F0]" />
+            <div className="aspect-[4/3] bg-white" />
           )}
           {pictures.length > 1 ? (
             <div className="absolute inset-x-0 bottom-0 flex gap-2 p-3">

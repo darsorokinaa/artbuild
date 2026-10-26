@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { getImageUrl } from "./media-url";
+import { Messenger } from "./messenger";
+import { ProductName, ViewProduct, type ProductCardData } from "./product-card";
 
 export type CatalogProduct = {
   id: number;
@@ -13,6 +15,9 @@ export type CatalogProduct = {
   avatar?: string;
   image?: string;
   sphere?: string;
+  productionTime?: string;
+  rating?: number | null;
+  reviews?: { id: number; author: string; rating: number; text: string }[];
 };
 
 function productsCount(count: number) {
@@ -44,6 +49,7 @@ function priceFor(price?: string) {
 export function ProductsCatalogList({ products }: { products: CatalogProduct[] }) {
   const [sphere, setSphere] = useState("Все");
   const [query, setQuery] = useState("");
+  const [chat, setChat] = useState<CatalogProduct | null>(null);
   const needle = query.trim().toLocaleLowerCase("ru");
   const spheres = useMemo(
     () => [...new Set(products.map((product) => product.sphere).filter(Boolean))].sort((a, b) => (a ?? "").localeCompare(b ?? "", "ru")),
@@ -94,7 +100,22 @@ export function ProductsCatalogList({ products }: { products: CatalogProduct[] }
         <p className="mt-16 text-sm font-light leading-7">Ничего не нашлось.</p>
       ) : (
         <div className="mt-16 grid grid-cols-1 gap-x-12 gap-y-20 md:grid-cols-2">
-          {visible.map((product) => (
+          {visible.map((product) => {
+            const card: ProductCardData = {
+              id: product.id,
+              title: product.title,
+              description: product.description,
+              price: product.price,
+              image: product.image,
+              sphere: product.sphere,
+              seller: product.seller,
+              sellerId: product.sellerId,
+              avatar: product.avatar,
+              productionTime: product.productionTime,
+              rating: product.rating,
+              reviews: product.reviews,
+            };
+            return (
             <article key={product.id}>
               {product.image ? (
                 <img
@@ -106,7 +127,7 @@ export function ProductsCatalogList({ products }: { products: CatalogProduct[] }
                 <div className="aspect-[5/4] bg-[#E7E1D8]" />
               )}
               <h2 className="mt-6 font-[family-name:var(--font-display)] text-4xl font-light leading-none tracking-tight md:text-5xl">
-                {product.title}
+                <ProductName product={card} className="font-[family-name:var(--font-display)] text-4xl font-light leading-none tracking-tight hover:underline md:text-5xl" />
               </h2>
               <div className="mt-4 flex items-center gap-3">
                 {product.avatar ? (
@@ -129,10 +150,31 @@ export function ProductsCatalogList({ products }: { products: CatalogProduct[] }
               <p className="mt-4 text-[11px] font-light uppercase tracking-[0.2em] text-[#1A1A1A]/45">
                 {priceFor(product.price)}
               </p>
+              <div className="flex flex-wrap gap-3">
+                <ViewProduct product={card} />
+                {product.sellerId ? (
+                  <button
+                    type="button"
+                    onClick={() => setChat(product)}
+                    className="mt-6 bg-[#1A1A1A] px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] text-white"
+                  >
+                    Связаться с автором
+                  </button>
+                ) : null}
+              </div>
             </article>
-          ))}
+            );
+          })}
         </div>
       )}
+      {chat ? (
+        <Messenger
+          productId={chat.id}
+          productTitle={chat.title}
+          authorName={chat.seller ?? ""}
+          onClose={() => setChat(null)}
+        />
+      ) : null}
     </>
   );
 }

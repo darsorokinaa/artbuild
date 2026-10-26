@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Cormorant_Garamond, Manrope } from "next/font/google";
+import { DialogsButton } from "./messenger";
 
 const manrope = Manrope({
   subsets: ["cyrillic", "latin"],
@@ -27,7 +28,7 @@ function TextLink({ href, children }: { href: string; children: ReactNode }) {
 
 function SiteHeader() {
   return (
-    <header className="sticky top-0 z-20 border-b border-[#E7E1D8] bg-[#F6F3EE]/90 backdrop-blur-sm">
+    <header className="sticky top-0 z-20 border-b border-[#E7E1D8] bg-white/90 backdrop-blur-sm">
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-6 py-5 md:px-12 lg:px-16">
         <a
           href="/"
@@ -53,7 +54,7 @@ function SiteHeader() {
 
 function SiteFooter() {
   return (
-    <footer className="flex items-center justify-between border-t border-[#E7E1D8] px-6 py-6 text-[11px] font-light uppercase tracking-[0.22em] md:px-12 lg:px-16">
+    <footer className="flex items-center justify-between border-t border-[#E7E1D8] py-6 pl-6 pr-24 text-[11px] font-light uppercase tracking-[0.22em] md:pl-12 md:pr-28 lg:pl-16 lg:pr-32">
       <span>ArtBuild</span>
       <span>Галерея мастеров</span>
     </footer>
@@ -62,10 +63,11 @@ function SiteFooter() {
 
 export function SiteShell({ children }: { children: ReactNode }) {
   return (
-    <div lang="ru" className={`${manrope.className} ${display.variable} min-h-screen bg-[#F6F3EE] text-[#1A1A1A]`}>
+    <div lang="ru" className={`${manrope.className} ${display.variable} min-h-screen bg-white text-[#1A1A1A]`}>
       <SiteHeader />
       <main>{children}</main>
       <SiteFooter />
+      <DialogsButton />
     </div>
   );
 }

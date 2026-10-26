@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Suspense } from "react";
+import { ContactAuthor } from "./messenger";
+import { ProductName, ViewProduct, type ProductCardData } from "./product-card";
 import { getImageUrl } from "./media-url";
 import { MastersWindow, StageFallback } from "./masters-window";
 import { SiteShell } from "./site-shell";
@@ -20,7 +22,11 @@ type Master = {
   price?: string;
   image?: string;
   avatar?: string;
-  decription?: string;
+  sellerId?: number;
+  description?: string;
+  productionTime?: string;
+  rating?: number | null;
+  reviews?: { id: number; author: string; rating: number; text: string }[];
 };
 
 const workImages = [
@@ -107,17 +113,37 @@ function WorkImage({
   );
 }
 
+function productCard(master: Master, image?: string): ProductCardData {
+  return {
+    id: master.id,
+    title: master.name,
+    description: master.description,
+    price: master.price,
+    image,
+    sphere: master.city,
+    seller: master.specialization,
+    sellerId: master.sellerId,
+    avatar: master.avatar,
+    productionTime: master.productionTime,
+    rating: master.rating,
+    reviews: master.reviews,
+  };
+}
+
 function MasterLabel({
   master,
   index,
+  image,
 }: {
   master: Master;
   index: number;
+  image?: string;
 }) {
+  const card = productCard(master, image);
   return (
     <figcaption className="mt-4">
       <div className="flex items-baseline justify-between gap-4">
-        <p className="text-lg font-light">{master.name}</p>
+        <ProductName product={card} className="text-lg font-light hover:underline" />
         <p className="shrink-0 text-[11px] uppercase tracking-[0.22em]">{indexLabel(index)}</p>
       </div>
       <div className="mt-3 flex items-center gap-3">
@@ -134,6 +160,12 @@ function MasterLabel({
       <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-[#E6E4DF] pt-3 text-sm">
         <p className="text-[#1A1A1A]/70">{master.city}</p>
         <p className="shrink-0 text-[11px] uppercase tracking-[0.16em]">{priceFor(master)}</p>
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <ViewProduct product={card} />
+        {master.sellerId ? (
+          <ContactAuthor productId={master.id} productTitle={master.name} authorName={master.specialization} />
+        ) : null}
       </div>
     </figcaption>
   );
@@ -160,7 +192,7 @@ function CatalogGrid({ masters }: { masters: Master[] }) {
                 alt={[master.name, master.specialization, master.city].filter(Boolean).join(", ")}
                 className="aspect-[4/3] w-full object-cover object-center"
               />
-              <MasterLabel master={master} index={index} />
+              <MasterLabel master={master} index={index} image={imageFor(master, index)} />
             </figure>
           </li>
         ))}
@@ -186,8 +218,8 @@ function CatalogFallback() {
     <section className="border-t border-[#E6E4DF] px-6 py-16 md:px-12 lg:px-16">
       <h2 className="text-4xl font-light tracking-tight">Каталог</h2>
       <div className="mt-14 grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
-        <div className="aspect-[4/3] bg-[#F5F4F0]" />
-        <div className="hidden aspect-[4/3] bg-[#F5F4F0] md:block" />
+        <div className="aspect-[4/3] bg-white" />
+        <div className="hidden aspect-[4/3] bg-white md:block" />
       </div>
     </section>
   );
@@ -215,17 +247,25 @@ async function MasterCatalog() {
     (product: {
       id: number;
       title: string;
+      description?: string;
       price: string;
+      seller_id?: number | null;
       seller_name: string;
       avatar?: string | null;
       image?: string | null;
       sphere?: string;
-
+      production_time?: string;
+      rating?: number | null;
+      reviews?: { id: number; author: string; rating: number; text: string }[];
     }) => ({
       id: product.id,
       name: product.title,
       specialization: product.seller_name,
       city: product.sphere ?? "",
+      description: product.description || "",
+      productionTime: product.production_time || "",
+      rating: product.rating ?? null,
+      reviews: product.reviews ?? [],
       price: new Intl.NumberFormat("ru-RU", {
         style: "currency",
         currency: "RUB",
@@ -233,6 +273,7 @@ async function MasterCatalog() {
       }).format(Number(product.price)),
       image: product.image || undefined,
       avatar: product.avatar || undefined,
+      sellerId: product.seller_id || undefined,
     })
   );
 
@@ -245,7 +286,7 @@ async function MasterCatalog() {
 
 function Collections() {
   return (
-    <section id="projects" className="scroll-mt-28 bg-[#F5F4F0] px-6 py-20 md:px-12 md:py-28 lg:px-16">
+    <section id="projects" className="scroll-mt-28 bg-white px-6 py-20 md:px-12 md:py-28 lg:px-16">
       <div className="mb-14 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-[11px] uppercase tracking-[0.28em]">Подборки</p>

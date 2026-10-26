@@ -22,6 +22,8 @@ class ProductSerializer(serializers.ModelSerializer):
     avatar = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
     sphere = serializers.CharField(source='product_type.get_sphere_display', read_only=True)
+    reviews = serializers.SerializerMethodField()
+    rating = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
@@ -35,7 +37,27 @@ class ProductSerializer(serializers.ModelSerializer):
             'avatar',
             'image',
             'sphere',
+            'production_time',
+            'reviews',
+            'rating',
         ]
+
+    def get_reviews(self, product):
+        return [
+            {
+                'id': review.id,
+                'author': f'{review.author.first_name} {review.author.last_name}'.strip(),
+                'rating': review.rating,
+                'text': review.text,
+            }
+            for review in product.reviews.all()
+        ]
+
+    def get_rating(self, product):
+        scores = [review.rating for review in product.reviews.all()]
+        if not scores:
+            return None
+        return round(sum(scores) / len(scores), 1)
 
     def get_seller_name(self, product):
         return f'{product.seller.first_name} {product.seller.last_name}'.strip()
