@@ -21,7 +21,9 @@ class ProductSerializer(serializers.ModelSerializer):
     seller_name = serializers.SerializerMethodField()
     avatar = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
+    images = serializers.SerializerMethodField()
     sphere = serializers.CharField(source='product_type.get_sphere_display', read_only=True)
+    filters = serializers.SerializerMethodField()
     reviews = serializers.SerializerMethodField()
     rating = serializers.SerializerMethodField()
 
@@ -32,15 +34,41 @@ class ProductSerializer(serializers.ModelSerializer):
             'title',
             'description',
             'price',
+            'quantity',
             'seller_id',
             'seller_name',
             'avatar',
             'image',
+            'images',
             'sphere',
+            'color',
+            'materials',
+            'dimensions',
+            'weight',
+            'made_to_order',
+            'filters',
             'production_time',
             'reviews',
             'rating',
         ]
+
+    def get_filters(self, product):
+        grouped = {
+            'category': '',
+            'color': '',
+            'texture': '',
+            'material': [],
+            'style': '',
+            'format': '',
+            'subject': '',
+        }
+        for item in product.filters.all():
+            if item.kind == 'material':
+                grouped['material'].append(item.name)
+            elif item.kind in grouped and not grouped[item.kind]:
+                grouped[item.kind] = item.name
+        grouped['material'].sort()
+        return grouped
 
     def get_reviews(self, product):
         return [
@@ -71,15 +99,26 @@ class ProductSerializer(serializers.ModelSerializer):
             return url
         return request.build_absolute_uri(url)
 
-    def get_image(self, product):
-        photo = product.images.filter(is_main=True).first() or product.images.first()
-        if photo is None or not photo.image:
-            return None
+    def product_photos(self, product):
+        photos = [photo for photo in product.images.all() if photo.image]
+        photos.sort(key=lambda photo: (not photo.is_main, photo.sort_order, photo.id))
+        return photos
+
+    def photo_url(self, photo):
         request = self.context.get('request')
         url = photo.image.url
         if request is None:
             return url
         return request.build_absolute_uri(url)
+
+    def get_image(self, product):
+        photos = self.product_photos(product)
+        if not photos:
+            return None
+        return self.photo_url(photos[0])
+
+    def get_images(self, product):
+        return [self.photo_url(photo) for photo in self.product_photos(product)]
 
 
 class PortfolioSerializer(serializers.ModelSerializer):

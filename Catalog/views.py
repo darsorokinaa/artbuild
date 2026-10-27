@@ -8,7 +8,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .models import Conversation, PorfolioImage, Portfolio, Product, User
+from .models import CatalogFilter, Conversation, PorfolioImage, Portfolio, Product, User
 from .serializers import ProductSerializer
 
 
@@ -17,10 +17,18 @@ def catalog(request):
     products = (
         Product.objects.filter(status=Product.Status.PUBLISHED)
         .select_related('seller', 'product_type')
-        .prefetch_related('images', 'reviews__author')
+        .prefetch_related('images', 'reviews__author', 'filters')
     )
     serializer = ProductSerializer(products, many=True, context={'request': request})
     return Response(serializer.data)
+
+
+@api_view(['GET'])
+def catalog_filters(request):
+    grouped = {kind: [] for kind, _label in CatalogFilter.Kind.choices}
+    for item in CatalogFilter.objects.all():
+        grouped[item.kind].append(item.name)
+    return Response(grouped)
 
 
 def masters_queryset():
@@ -79,6 +87,25 @@ def product_image(request, product):
     return request.build_absolute_uri(photo.image.url)
 
 
+def grouped_filters(product):
+    grouped = {
+        'category': '',
+        'color': '',
+        'texture': '',
+        'material': [],
+        'style': '',
+        'format': '',
+        'subject': '',
+    }
+    for item in product.filters.all():
+        if item.kind == 'material':
+            grouped['material'].append(item.name)
+        elif item.kind in grouped and not grouped[item.kind]:
+            grouped[item.kind] = item.name
+    grouped['material'].sort()
+    return grouped
+
+
 def product_payload(request, product):
     reviews = [
         {
@@ -97,6 +124,12 @@ def product_payload(request, product):
         'price': str(product.price),
         'image': product_image(request, product),
         'sphere': product.product_type.get_sphere_display() if product.product_type_id else '',
+        'color': product.color,
+        'materials': product.materials,
+        'dimensions': product.dimensions,
+        'weight': str(product.weight) if product.weight is not None else '',
+        'made_to_order': product.made_to_order,
+        'filters': grouped_filters(product),
         'production_time': product.production_time,
         'reviews': reviews,
         'rating': round(sum(scores) / len(scores), 1) if scores else None,
@@ -154,7 +187,7 @@ def master_detail(request, user_id):
     products = (
         Product.objects.filter(seller=person, status=Product.Status.PUBLISHED)
         .select_related('product_type')
-        .prefetch_related('images', 'reviews__author')
+        .prefetch_related('images', 'reviews__author', 'filters')
     )
     profile['portfolios'] = [work_payload(request, work) for work in portfolios]
     profile['products'] = [product_payload(request, product) for product in products]

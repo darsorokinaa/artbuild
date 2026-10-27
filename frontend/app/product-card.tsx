@@ -21,6 +21,17 @@ export type ProductCardData = {
   seller?: string;
   sellerId?: number;
   avatar?: string;
+  category?: string;
+  color?: string;
+  texture?: string;
+  material?: string[];
+  materials?: string;
+  style?: string;
+  format?: string;
+  subject?: string;
+  dimensions?: string;
+  weight?: string;
+  madeToOrder?: boolean;
   productionTime?: string;
   rating?: number | null;
   reviews?: ProductReviewData[];
@@ -36,6 +47,33 @@ function ratingLabel(rating?: number | null) {
 function stars(rating: number) {
   const filled = Math.max(0, Math.min(5, Math.round(rating)));
   return `${"★".repeat(filled)}${"☆".repeat(5 - filled)}`;
+}
+
+function weightLabel(weight?: string) {
+  const value = Number(weight);
+  if (!Number.isFinite(value) || value <= 0) {
+    return "";
+  }
+  const text = (Math.round(value * 10) / 10).toString().replace(".", ",");
+  return `${text} кг`;
+}
+
+function characteristics(product: ProductCardData) {
+  const material = product.material?.length ? product.material.join(", ") : product.materials;
+  const rows: [string, string][] = [
+    ["Категория", product.category || ""],
+    ["Цвет", product.color || ""],
+    ["Текстура", product.texture || ""],
+    ["Материал", material || ""],
+    ["Стиль", product.style || ""],
+    ["Формат", product.format || ""],
+    ["Сюжет", product.subject || ""],
+    ["Размеры", product.dimensions || ""],
+    ["Вес", weightLabel(product.weight)],
+    ["Изготовление", product.madeToOrder == null ? "" : product.madeToOrder ? "На заказ" : "В наличии"],
+    ["Срок изготовления", product.productionTime || ""],
+  ];
+  return rows.filter(([, value]) => value.trim().length > 0);
 }
 
 function priceFor(price?: string) {
@@ -120,10 +158,20 @@ export function ProductDialog({
         </div>
         {product.sphere ? <p className="mt-1 text-sm font-light leading-7 text-[#1A1A1A]/70">{product.sphere}</p> : null}
         {product.description ? <p className="mt-4 max-w-2xl text-sm font-light leading-7">{product.description}</p> : null}
-        <p className="mt-4 text-[11px] font-light uppercase tracking-[0.2em] text-[#1A1A1A]/45">
-          {priceFor(product.price)}
-          {product.productionTime ? ` · ${product.productionTime}` : ""}
-        </p>
+        {characteristics(product).length > 0 ? (
+          <section className="mt-8">
+            <h4 className="font-[family-name:var(--font-display)] text-3xl font-light leading-none">Характеристики</h4>
+            <dl className="mt-4 border-t border-[#E7E1D8]">
+              {characteristics(product).map(([label, value]) => (
+                <div key={label} className="flex items-baseline justify-between gap-6 border-b border-[#E7E1D8] py-3">
+                  <dt className="text-[11px] uppercase tracking-[0.16em] text-[#1A1A1A]/45">{label}</dt>
+                  <dd className="text-right text-sm font-light">{value}</dd>
+                </div>
+              ))}
+            </dl>
+          </section>
+        ) : null}
+        <p className="mt-4 text-[11px] font-light uppercase tracking-[0.2em] text-[#1A1A1A]/45">{priceFor(product.price)}</p>
         {product.sellerId ? (
           <ContactAuthor productId={product.id} productTitle={product.title} authorName={authorName} />
         ) : null}
@@ -197,17 +245,21 @@ export function ProductTile({ product, uniform = false }: { product: ProductCard
           <span className={`${uniform ? "aspect-square" : "h-56 rounded-2xl"} block w-full bg-[#E6E4DF]`} />
         )}
         {uniform ? (
-          <span className="mt-3 block text-[15px] leading-5 text-[#1A1A1A]">
-            <span className="flex items-baseline justify-between gap-3 sm:hidden">
+          <span className="mt-3 block text-left text-[15px] leading-5 text-[#1A1A1A]">
+            <span className="flex items-center gap-3">
+              {product.avatar ? (
+                <img
+                  src={getImageUrl(product.avatar)}
+                  alt=""
+                  className="h-11 w-11 shrink-0 bg-[#E6E4DF] object-cover object-top"
+                />
+              ) : (
+                <span className="h-11 w-11 shrink-0 bg-[#E6E4DF]" />
+              )}
               <span>{product.seller}</span>
-              <span className="shrink-0">{cardPrice(product.price)}</span>
             </span>
-            <span className="mt-1 block text-center font-medium italic sm:hidden">"{product.title}"</span>
-            <span className="hidden grid-cols-[1fr_auto_1fr] items-baseline gap-3 sm:grid">
-              <span className="truncate">{product.seller}</span>
-              <span className="max-w-[14rem] truncate text-center font-medium italic">"{product.title}"</span>
-              <span className="text-right">{cardPrice(product.price)}</span>
-            </span>
+            <span className="mt-2 block">{product.title}</span>
+            <span className="mt-1 block">{cardPrice(product.price)}</span>
           </span>
         ) : (
           <span className="absolute inset-x-0 bottom-0 rounded-b-2xl bg-gradient-to-t from-black/70 via-black/25 to-transparent px-4 pb-4 pt-16 text-white">

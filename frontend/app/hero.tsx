@@ -30,43 +30,29 @@ export function Hero() {
     return () => observer.disconnect();
   }, []);
 
-  async function play() {
+  useEffect(() => {
     const video = videoRef.current;
     if (!video) {
       return;
     }
     video.muted = true;
     video.volume = 0;
-    try {
-      video.currentTime = 0;
-      await video.play();
-    } catch {
-      setPlaying(false);
-    }
-  }
-
-  function stop() {
-    const video = videoRef.current;
-    if (!video) {
-      return;
-    }
-    video.pause();
-    video.currentTime = 0;
-  }
+    video.play().catch(() => setPlaying(false));
+  }, []);
 
   return (
     <section className="px-3 pt-2 md:px-5">
       <div
         ref={frameRef}
         className="relative min-h-[92vh] overflow-hidden rounded-[28px] bg-[#E7E1D8]"
-        onMouseEnter={play}
-        onMouseLeave={stop}
       >
         <video
           ref={videoRef}
           src="/hero.mp4"
           poster="/hero.jpg"
+          autoPlay
           muted
+          loop
           playsInline
           preload="auto"
           className="absolute inset-0 h-full w-full object-cover object-[72%_center]"

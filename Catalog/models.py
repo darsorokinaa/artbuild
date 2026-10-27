@@ -261,6 +261,49 @@ class ProductType(models.Model):
 
 
 # =========================
+# ФИЛЬТРЫ КАТАЛОГА
+# =========================
+
+class CatalogFilter(models.Model):
+
+    class Kind(models.TextChoices):
+        CATEGORY = 'category', 'Категория'
+        COLOR = 'color', 'Цвет'
+        TEXTURE = 'texture', 'Текстура'
+        MATERIAL = 'material', 'Материал'
+        STYLE = 'style', 'Стиль'
+        FORMAT = 'format', 'Формат'
+        SUBJECT = 'subject', 'Сюжет'
+
+    kind = models.CharField(
+        max_length=20,
+        choices=Kind.choices,
+        verbose_name='Группа'
+    )
+
+    name = models.CharField(
+        max_length=100,
+        verbose_name='Значение'
+    )
+
+    position = models.PositiveSmallIntegerField(
+        default=0,
+        verbose_name='Порядок'
+    )
+
+    class Meta:
+        verbose_name = 'Фильтр каталога'
+        verbose_name_plural = 'Фильтры каталога'
+        ordering = ['kind', 'position', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['kind', 'name'], name='unique_catalog_filter'),
+        ]
+
+    def __str__(self):
+        return f'{self.get_kind_display()}: {self.name}'
+
+
+# =========================
 # ТОВАРЫ
 # =========================
 
@@ -349,6 +392,13 @@ class Product(models.Model):
         max_length=100,
         blank=True,
         verbose_name='Цвет'
+    )
+
+    filters = models.ManyToManyField(
+        CatalogFilter,
+        blank=True,
+        related_name='products',
+        verbose_name='Фильтры'
     )
 
     # Изготовление на заказ

@@ -3,7 +3,6 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, type SessionUser } from "./account-provider";
-import { MasterRegister } from "./master-register";
 
 const fieldClass =
   "mt-1 w-full border-b border-[#1A1A1A]/20 bg-transparent pb-1.5 pt-0.5 text-[15px] font-light outline-none";
@@ -63,12 +62,15 @@ export function AuthPanel({
   const { setSession } = useAccount();
   const [mode, setMode] = useState<"login" | "register">(initialMode);
   const [kind, setKind] = useState<"master" | "customer">(initialKind);
-  const [specialty, setSpecialty] = useState("master");
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
   function switchMode(next: "login" | "register") {
-    setMode(next);
+    if (next === "register") {
+      router.push("/register");
+      return;
+    }
+    setMode("login");
     setError("");
   }
 
@@ -112,8 +114,8 @@ export function AuthPanel({
           email: form.get("email"),
           phone: form.get("phone"),
           password,
-          specialty: kind === "master" ? specialty : "",
-          description: kind === "master" ? form.get("description") : "",
+          specialty: "",
+          description: "",
         }),
       });
       const data = await response.json();
@@ -129,8 +131,6 @@ export function AuthPanel({
       setPending(false);
     }
   }
-
-  const masterWizard = mode === "register" && kind === "master";
 
   return (
     <section className="px-6 py-6 md:px-12 lg:px-16">
@@ -159,9 +159,7 @@ export function AuthPanel({
             />
           ) : null}
         </div>
-        {masterWizard ? <MasterRegister specialty={specialty} onSpecialty={setSpecialty} /> : null}
-        {masterWizard ? null : (
-          <form onSubmit={submit} className="mt-6 grid gap-5">
+        <form onSubmit={submit} className="mt-6 grid gap-5">
             {mode === "register" ? (
               <div className="grid grid-cols-1 gap-x-6 gap-y-4 min-[420px]:grid-cols-2">
                 <Field label="Имя">
@@ -199,8 +197,7 @@ export function AuthPanel({
                 {mode === "login" ? "Войти" : "Создать учётную запись"}
               </button>
             </div>
-          </form>
-        )}
+        </form>
       </div>
     </section>
   );

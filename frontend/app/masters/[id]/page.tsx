@@ -75,6 +75,18 @@ async function loadMaster(id: string): Promise<MasterProfile | null | undefined>
         image?: string | null;
         sphere?: string;
         production_time?: string;
+        dimensions?: string;
+        weight?: string | null;
+        made_to_order?: boolean;
+        filters?: {
+          category?: string;
+          color?: string;
+          texture?: string;
+          material?: string[];
+          style?: string;
+          format?: string;
+          subject?: string;
+        };
         rating?: number | null;
         reviews?: { id: number; author: string; rating: number; text: string }[];
       }) => ({
@@ -84,6 +96,16 @@ async function loadMaster(id: string): Promise<MasterProfile | null | undefined>
         price: product.price,
         image: product.image || undefined,
         sphere: product.sphere || "",
+        category: product.filters?.category || "",
+        color: product.filters?.color || "",
+        texture: product.filters?.texture || "",
+        material: product.filters?.material ?? [],
+        style: product.filters?.style || "",
+        format: product.filters?.format || "",
+        subject: product.filters?.subject || "",
+        dimensions: product.dimensions || "",
+        weight: product.weight || "",
+        madeToOrder: typeof product.made_to_order === "boolean" ? product.made_to_order : undefined,
         productionTime: product.production_time || "",
         rating: product.rating ?? null,
         reviews: product.reviews ?? [],

@@ -26,6 +26,16 @@ export type ProfileProduct = {
   price?: string;
   image?: string;
   sphere?: string;
+  category?: string;
+  color?: string;
+  texture?: string;
+  material?: string[];
+  style?: string;
+  format?: string;
+  subject?: string;
+  dimensions?: string;
+  weight?: string;
+  madeToOrder?: boolean;
   productionTime?: string;
   rating?: number | null;
   reviews?: { id: number; author: string; rating: number; text: string }[];
@@ -185,6 +195,16 @@ export function MasterProfileBody({
                 sphere: product.sphere,
                 seller: authorName,
                 sellerId: authorId,
+                category: product.category,
+                color: product.color,
+                texture: product.texture,
+                material: product.material,
+                style: product.style,
+                format: product.format,
+                subject: product.subject,
+                dimensions: product.dimensions,
+                weight: product.weight,
+                madeToOrder: product.madeToOrder,
                 productionTime: product.productionTime,
                 rating: product.rating,
                 reviews: product.reviews,

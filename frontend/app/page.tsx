@@ -5,6 +5,7 @@ import { ProductTile, type ProductCardData } from "./product-card";
 import { getImageUrl } from "./media-url";
 import { Hero } from "./hero";
 import { loadMasters } from "./masters-window";
+import type { StageMaster } from "./master-stage";
 import { SiteShell } from "./site-shell";
 
 export const metadata: Metadata = {
@@ -24,6 +25,16 @@ type Master = {
   sellerId?: number;
   description?: string;
   productionTime?: string;
+  category?: string;
+  color?: string;
+  texture?: string;
+  material?: string[];
+  style?: string;
+  format?: string;
+  subject?: string;
+  dimensions?: string;
+  weight?: string;
+  madeToOrder?: boolean;
   rating?: number | null;
   reviews?: { id: number; author: string; rating: number; text: string }[];
 };
@@ -73,6 +84,16 @@ function productCard(master: Master, image?: string): ProductCardData {
     sellerId: master.sellerId,
     avatar: master.avatar,
     productionTime: master.productionTime,
+    category: master.category,
+    color: master.color,
+    texture: master.texture,
+    material: master.material,
+    style: master.style,
+    format: master.format,
+    subject: master.subject,
+    dimensions: master.dimensions,
+    weight: master.weight,
+    madeToOrder: master.madeToOrder,
     rating: master.rating,
     reviews: master.reviews,
   };
@@ -157,6 +178,18 @@ async function MasterCatalog() {
       image?: string | null;
       sphere?: string;
       production_time?: string;
+      dimensions?: string;
+      weight?: string | null;
+      made_to_order?: boolean;
+      filters?: {
+        category?: string;
+        color?: string;
+        texture?: string;
+        material?: string[];
+        style?: string;
+        format?: string;
+        subject?: string;
+      };
       rating?: number | null;
       reviews?: { id: number; author: string; rating: number; text: string }[];
     }) => ({
@@ -166,6 +199,16 @@ async function MasterCatalog() {
       city: product.sphere ?? "",
       description: product.description || "",
       productionTime: product.production_time || "",
+      category: product.filters?.category || "",
+      color: product.filters?.color || "",
+      texture: product.filters?.texture || "",
+      material: product.filters?.material ?? [],
+      style: product.filters?.style || "",
+      format: product.filters?.format || "",
+      subject: product.filters?.subject || "",
+      dimensions: product.dimensions || "",
+      weight: product.weight || "",
+      madeToOrder: typeof product.made_to_order === "boolean" ? product.made_to_order : undefined,
       rating: product.rating ?? null,
       reviews: product.reviews ?? [],
       price: new Intl.NumberFormat("ru-RU", {
@@ -186,40 +229,114 @@ async function MasterCatalog() {
   return <CatalogGrid masters={catalog} />;
 }
 
-function CategoryRow({
-  works,
-}: {
-  works: { id: number; image?: string; label: string }[];
-}) {
-  const cards = works.filter((work) => work.image).slice(0, 4);
-  if (cards.length === 0) {
-    return null;
+function specialization(role: string, title: string) {
+  const text = title.toLocaleLowerCase("ru");
+  let craft = "";
+  if (/шкаф|стол|мебел|кресл/.test(text)) {
+    craft = "Авторская мебель";
+  } else if (/роспис|панно|живоп/.test(text)) {
+    craft = "Живопись";
+  } else if (/текстил|подуш|льн/.test(text)) {
+    craft = "Текстиль";
+  } else if (/светильник|светодизайн/.test(text)) {
+    craft = "Светодизайн";
+  } else if (role === "Архитектор") {
+    craft = "Архитектура";
+  } else if (role === "Дизайнер") {
+    craft = "Интерьер";
   }
+  return craft ? `${role} · ${craft}` : role;
+}
+
+function craftRank(role: string, title: string) {
+  const line = specialization(role, title);
+  if (line.includes("Живопись")) {
+    return 0;
+  }
+  if (line.includes("мебель")) {
+    return 1;
+  }
+  if (line.includes("Текстиль")) {
+    return 2;
+  }
+  if (line.includes("Архитектура")) {
+    return 3;
+  }
+  if (line.includes("Светодизайн")) {
+    return 4;
+  }
+  return 5;
+}
+
+function featuredMasters(works: StageMaster[]) {
+  const byUser = new Map<number, StageMaster>();
+  for (const work of works) {
+    if (!work.image || byUser.has(work.userId)) {
+      continue;
+    }
+    byUser.set(work.userId, work);
+  }
+  const people = [...byUser.values()].sort(
+    (left, right) => craftRank(left.role, left.title) - craftRank(right.role, right.title) || left.userId - right.userId,
+  );
+  const picked: StageMaster[] = [];
+  const seen = new Set<number>();
+  for (const person of people) {
+    const rank = craftRank(person.role, person.title);
+    if (seen.has(rank)) {
+      continue;
+    }
+    seen.add(rank);
+    picked.push(person);
+    if (picked.length === 4) {
+      break;
+    }
+  }
+  return picked;
+}
+
+function CategoryRow({ works }: { works: StageMaster[] }) {
+  const cards = featuredMasters(works);
   return (
     <section id="masters" className="scroll-mt-28 px-5 py-8 md:px-8">
       <div className="mb-6 flex items-end justify-between gap-6">
-        <h2 className="font-[family-name:var(--font-display)] text-4xl font-medium">Мастера</h2>
-        <a href="/masters" className="text-sm text-[#1A1A1A]/70 hover:text-[#1A1A1A]">
+        <div>
+          <h2 className="font-[family-name:var(--font-display)] text-4xl font-medium">Мастера</h2>
+          <p className="mt-2 max-w-sm text-sm leading-6 text-[#1A1A1A]/65">
+            Люди, которые превращают идеи в уникальные вещи.
+          </p>
+        </div>
+        <a href="/masters" className="shrink-0 text-sm text-[#1A1A1A]/70 hover:text-[#1A1A1A]">
           Все мастера →
         </a>
       </div>
-      <ul className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {cards.map((work) => (
-          <li key={work.id}>
-            <a href="/masters" className="group block">
-              <WorkImage
-                src={work.image ?? ""}
-                alt={work.label}
-                className="aspect-[16/10] w-full rounded-2xl object-cover"
-              />
-              <span className="mt-3 flex items-center justify-between gap-3 text-sm">
-                <span className="truncate">{work.label}</span>
-                <span className="text-[#1A1A1A]/40 transition-transform group-hover:translate-x-0.5">→</span>
-              </span>
-            </a>
-          </li>
-        ))}
-      </ul>
+      {cards.length > 0 ? (
+        <ul className="-mx-5 flex snap-x snap-mandatory gap-3 overflow-x-auto px-5 pb-1 md:mx-0 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:px-0 lg:grid-cols-4">
+          {cards.map((work) => (
+            <li key={work.userId} className="w-[78%] shrink-0 snap-start md:w-auto">
+              <a href={`/masters/${work.userId}`} className="group block">
+                <span className="relative block overflow-hidden rounded-lg">
+                  <WorkImage
+                    src={work.image ?? ""}
+                    alt={work.owner || work.title}
+                    className="aspect-[16/10] w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.02]"
+                  />
+                  <svg
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                    className="absolute right-3 top-3 h-4 w-4 fill-none stroke-white stroke-[1.5] drop-shadow-[0_1px_2px_rgba(0,0,0,0.55)]"
+                  >
+                    <path d="M7 17L17 7M9 7h8v8" />
+                  </svg>
+                </span>
+                <span className="mt-3 block text-sm font-medium text-[#1A1A1A]">{work.owner}</span>
+                <span className="mt-0.5 block text-[13px] leading-5 text-[#1A1A1A]/55">{specialization(work.role, work.title)}</span>
+                {work.title ? <span className="mt-1 block text-[13px] leading-5 text-[#1A1A1A]/70">{work.title}</span> : null}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </section>
   );
 }
@@ -300,13 +417,7 @@ async function HomePage() {
   return (
     <>
       <Hero />
-      <CategoryRow
-        works={works.map((work) => ({
-          id: work.id,
-          image: work.image,
-          label: work.title || work.role,
-        }))}
-      />
+      <CategoryRow works={works} />
       <Suspense fallback={<CatalogFallback />}>
         <MasterCatalog />
       </Suspense>
