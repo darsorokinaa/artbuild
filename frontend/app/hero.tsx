@@ -44,7 +44,7 @@ export function Hero() {
     <section className="px-3 pt-2 md:px-5">
       <div
         ref={frameRef}
-        className="relative min-h-[92vh] overflow-hidden rounded-[28px] bg-[#E7E1D8]"
+        className="relative min-h-[92vh] overflow-hidden rounded-[28px] bg-[#E6E6E6]"
       >
         <video
           ref={videoRef}
@@ -60,14 +60,14 @@ export function Hero() {
           onPause={() => setPlaying(false)}
         />
         <div
-          className={`pointer-events-none absolute inset-0 bg-gradient-to-r from-[#F6F3EE]/55 via-[#F6F3EE]/15 to-transparent ${playing ? "opacity-40" : "opacity-100"}`}
+          className={`pointer-events-none absolute inset-0 bg-gradient-to-r from-[#F4F4F4]/55 via-[#F4F4F4]/15 to-transparent ${playing ? "opacity-40" : "opacity-100"}`}
         />
         <div className="pointer-events-none absolute inset-x-0 top-[7%] flex justify-center">
           <h1
             ref={titleRef}
             className="whitespace-nowrap text-center font-[family-name:var(--font-wordmark)] font-medium lowercase leading-[0.8] tracking-tight text-white/55"
           >
-            blurrr
+            naidista
           </h1>
         </div>
         <div className="relative flex min-h-[92vh] flex-col justify-end px-6 py-10 md:px-10 md:py-12">

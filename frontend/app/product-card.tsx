@@ -139,14 +139,14 @@ export function ProductDialog({
           <img
             src={getImageUrl(product.image)}
             alt={product.title}
-            className="mt-8 aspect-[5/4] w-full bg-[#E7E1D8] object-cover object-center md:aspect-[16/9]"
+            className="mt-8 aspect-[5/4] w-full bg-[#E6E6E6] object-cover object-center md:aspect-[16/9]"
           />
         ) : (
-          <div className="mt-8 aspect-[5/4] bg-[#E7E1D8] md:aspect-[16/9]" />
+          <div className="mt-8 aspect-[5/4] bg-[#E6E6E6] md:aspect-[16/9]" />
         )}
         <div className="mt-8 flex items-center gap-3">
           {product.avatar ? (
-            <img src={getImageUrl(product.avatar)} alt="" className="h-8 w-8 bg-[#E7E1D8] object-cover object-top" />
+            <img src={getImageUrl(product.avatar)} alt="" className="h-8 w-8 bg-[#E6E6E6] object-cover object-top" />
           ) : null}
           {product.sellerId ? (
             <a href={`/masters/${product.sellerId}`} className="text-sm font-light leading-7 hover:underline">
@@ -161,9 +161,9 @@ export function ProductDialog({
         {characteristics(product).length > 0 ? (
           <section className="mt-8">
             <h4 className="font-[family-name:var(--font-display)] text-3xl font-light leading-none">Характеристики</h4>
-            <dl className="mt-4 border-t border-[#E7E1D8]">
+            <dl className="mt-4 border-t border-[#E6E6E6]">
               {characteristics(product).map(([label, value]) => (
-                <div key={label} className="flex items-baseline justify-between gap-6 border-b border-[#E7E1D8] py-3">
+                <div key={label} className="flex items-baseline justify-between gap-6 border-b border-[#E6E6E6] py-3">
                   <dt className="text-[11px] uppercase tracking-[0.16em] text-[#1A1A1A]/45">{label}</dt>
                   <dd className="text-right text-sm font-light">{value}</dd>
                 </div>
@@ -175,7 +175,7 @@ export function ProductDialog({
         {product.sellerId ? (
           <ContactAuthor productId={product.id} productTitle={product.title} authorName={authorName} />
         ) : null}
-        <section className="mt-10 border-t border-[#E7E1D8] pt-8">
+        <section className="mt-10 border-t border-[#E6E6E6] pt-8">
           <div className="flex items-baseline justify-between gap-4">
             <h4 className="font-[family-name:var(--font-display)] text-3xl font-light leading-none">Отзывы</h4>
             <p className="text-[11px] font-light uppercase tracking-[0.2em] text-[#1A1A1A]/45">
@@ -187,7 +187,7 @@ export function ProductDialog({
           ) : (
             <div className="mt-6">
               {(product.reviews ?? []).map((review) => (
-                <article key={review.id} className="border-t border-[#E7E1D8] py-5">
+                <article key={review.id} className="border-t border-[#E6E6E6] py-5">
                   <div className="flex items-baseline justify-between gap-4">
                     <p className="text-sm font-light">{review.author}</p>
                     <p className="shrink-0 text-[11px] font-light tracking-[0.16em] text-[#1A1A1A]/55">
@@ -239,10 +239,10 @@ export function ProductTile({ product, uniform = false }: { product: ProductCard
           <img
             src={getImageUrl(product.image)}
             alt=""
-            className={`${uniform ? "aspect-square object-cover object-center" : "block h-auto rounded-2xl"} w-full bg-[#E6E4DF]`}
+            className={`${uniform ? "aspect-square object-cover object-center" : "block h-auto rounded-2xl"} w-full bg-[#E6E6E6]`}
           />
         ) : (
-          <span className={`${uniform ? "aspect-square" : "h-56 rounded-2xl"} block w-full bg-[#E6E4DF]`} />
+          <span className={`${uniform ? "aspect-square" : "h-56 rounded-2xl"} block w-full bg-[#E6E6E6]`} />
         )}
         {uniform ? (
           <span className="mt-3 block text-left text-[15px] leading-5 text-[#1A1A1A]">
@@ -251,10 +251,10 @@ export function ProductTile({ product, uniform = false }: { product: ProductCard
                 <img
                   src={getImageUrl(product.avatar)}
                   alt=""
-                  className="h-11 w-11 shrink-0 bg-[#E6E4DF] object-cover object-top"
+                  className="h-11 w-11 shrink-0 bg-[#E6E6E6] object-cover object-top"
                 />
               ) : (
-                <span className="h-11 w-11 shrink-0 bg-[#E6E4DF]" />
+                <span className="h-11 w-11 shrink-0 bg-[#E6E6E6]" />
               )}
               <span>{product.seller}</span>
             </span>

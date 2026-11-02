@@ -23,6 +23,7 @@ class User(AbstractUser):
         MASTER = 'master', 'Мастер'
         DESIGNER = 'designer', 'Дизайнер'
         ARCHITECT = 'architect', 'Архитектор'
+        ORGANIZATION = 'organization', 'Организация'
         CUSTOMER = 'customer', 'Заказчик'
 
     email = models.EmailField(
@@ -167,17 +168,16 @@ class Portfolio(models.Model):
 
 class PorfolioImage(models.Model):
 
-    portfolio_id = models.ForeignKey(
+    portfolio = models.ForeignKey(
         Portfolio,
         on_delete=models.CASCADE,
         related_name='images',
-        verbose_name='Работа портфолио'
+        verbose_name='Портфолио'
     )
 
     image = models.ImageField(
         upload_to='portfolio/',
-        null=True,
-        blank=True,
+        unique=True,
         verbose_name='Изображение'
     )
 
@@ -185,6 +185,11 @@ class PorfolioImage(models.Model):
         blank=True,
         default='',
         verbose_name='Описание изображения'
+    )
+
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок'
     )
 
     created_at = models.DateTimeField(
@@ -195,9 +200,10 @@ class PorfolioImage(models.Model):
     class Meta:
         verbose_name = 'Изображение портфолио'
         verbose_name_plural = 'Изображения портфолио'
+        ordering = ['sort_order', 'id']
 
     def __str__(self):
-        return f'Изображение для {self.portfolio_id.portfolio_title}'
+        return f'Изображение для {self.portfolio.portfolio_title}'
 
 
 # =========================
@@ -578,5 +584,78 @@ class Conversation(models.Model):
 
     def __str__(self):
         return f'Диалог {self.user_one_id} и {self.user_two_id}'
+
+
+class MakerProfile(models.Model):
+
+    class Kind(models.TextChoices):
+        ARTIST = 'artist', 'Мастер / художник'
+        ORGANIZATION = 'organization', 'Организация'
+
+    class PhotoChoice(models.TextChoices):
+        OWN = 'own', 'Готов выставлять в каталог вложенные фотографии'
+        STUDIO = 'studio', 'Хотел бы заказать профессиональную съемку'
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name='maker_profile',
+        verbose_name='Пользователь'
+    )
+
+    kind = models.CharField(
+        max_length=20,
+        choices=Kind.choices,
+        verbose_name='Кто регистрируется'
+    )
+
+    works = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name='Чем занимается'
+    )
+
+    work_other = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Другая работа'
+    )
+
+    photo_choice = models.CharField(
+        max_length=20,
+        choices=PhotoChoice.choices,
+        verbose_name='Фотографии работ'
+    )
+
+    age = models.PositiveSmallIntegerField(
+        null=True,
+        blank=True,
+        verbose_name='Возраст'
+    )
+
+    education = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Образование'
+    )
+
+    materials = models.JSONField(
+        default=list,
+        blank=True,
+        verbose_name='Материалы'
+    )
+
+    material_other = models.TextField(
+        blank=True,
+        default='',
+        verbose_name='Другой материал'
+    )
+
+    class Meta:
+        verbose_name = 'Анкета мастера'
+        verbose_name_plural = 'Анкеты мастеров'
+
+    def __str__(self):
+        return f'{self.get_kind_display()} — {self.user}'
 
 

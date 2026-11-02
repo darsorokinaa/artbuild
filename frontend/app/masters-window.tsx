@@ -6,13 +6,14 @@ const roleLabel: Record<string, string> = {
   master: "Мастер",
   designer: "Дизайнер",
   architect: "Архитектор",
+  organization: "Организация",
   customer: "Заказчик",
 };
 
 export function StageFallback() {
   return (
-    <section className="px-6 py-8 md:px-12 lg:px-16">
-      <div className="aspect-[4/3] bg-white lg:w-2/3" />
+    <section className="px-5 py-8 md:px-8 md:py-10">
+      <div className="min-h-[28rem] border border-[#E6E6E6] bg-white" />
     </section>
   );
 }
@@ -48,6 +49,7 @@ export async function loadMasters() {
         image?: string | null;
         images?: { src: string; description?: string }[];
         duration?: string;
+        crafts?: string[];
       }) => {
         const images =
           work.images && work.images.length > 0
@@ -70,11 +72,10 @@ export async function loadMasters() {
           image: images[0]?.src,
           images,
           duration: work.duration || undefined,
-  
+          crafts: work.crafts ?? [],
         };
       }
-    )
-    .filter((work: StageMaster) => work.images.length > 0);
+    );
 
   return gallery;
 }
@@ -101,16 +102,11 @@ export async function MastersCatalog() {
   }
 
   return (
-    <section className="px-6 py-12 md:px-12 md:py-16 lg:px-16">
-      <p className="text-[11px] font-light uppercase tracking-[0.32em] text-[#1A1A1A]/55">Каталог</p>
-      <h1 className="mt-6 font-[family-name:var(--font-display)] text-7xl font-light leading-none tracking-tight md:text-8xl">
-        Мастера
-      </h1>
-      {gallery.length === 0 ? (
-        <p className="mt-16 text-sm font-light leading-7">Мастеров пока нет.</p>
-      ) : (
+    <section className="px-5 py-8 md:px-8 md:py-10">
+      <h1 className="sr-only">Мастера</h1>
+      <div className="border border-[#E6E6E6] bg-white px-5 py-8 md:px-10 md:py-12">
         <MastersCatalogList masters={gallery} />
-      )}
+      </div>
     </section>
   );
 }

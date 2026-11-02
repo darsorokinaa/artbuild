@@ -75,8 +75,9 @@ function MasterCabinet({
           <p className="mt-4 text-sm font-light leading-7">Портфолио пока не загружено.</p>
         ) : null}
         {cover.map((work) => (
-          <article key={work.id} className="mt-4 border-t border-[#E7E1D8] pt-4">
-            <Photos images={work.images.slice(0, 1)} />
+          <article key={work.id} className="mt-4 border-t border-[#E6E6E6] pt-4">
+            <h3 className="font-[family-name:var(--font-display)] text-2xl font-light">{work.title}</h3>
+            <Photos images={work.images} />
             {work.description ? <p className="mt-4 max-w-xl text-sm font-light leading-7">{work.description}</p> : null}
             <p className="mt-3 text-[11px] uppercase tracking-[0.16em] text-[#1A1A1A]/45">{work.status}</p>
           </article>
@@ -84,7 +85,7 @@ function MasterCabinet({
         {works.length > 0 ? (
           <ul className="mt-8">
             {works.map((work) => (
-              <li key={work.id} className="border-t border-[#E7E1D8] py-5">
+              <li key={work.id} className="border-t border-[#E6E6E6] py-5">
                 <div className="flex items-baseline justify-between gap-4">
                   <h3 className="font-[family-name:var(--font-display)] text-2xl font-light">{work.title}</h3>
                   <span className="text-[11px] uppercase tracking-[0.16em] text-[#1A1A1A]/45">{work.status}</span>
@@ -103,13 +104,13 @@ function MasterCabinet({
           {products.map((product) => {
             const price = priceFor(product.price);
             return (
-              <li key={product.id} className="border-t border-[#E7E1D8] py-5">
+              <li key={product.id} className="border-t border-[#E6E6E6] py-5">
                 <div className="flex items-baseline justify-between gap-4">
                   <h3 className="font-[family-name:var(--font-display)] text-2xl font-light">{product.title}</h3>
                   <span className="text-[11px] uppercase tracking-[0.16em] text-[#1A1A1A]/45">{product.status}</span>
                 </div>
                 {product.image ? (
-                  <img src={getImageUrl(product.image)} alt="" className="mt-4 h-28 w-24 border border-[#E7E1D8] object-cover" />
+                  <img src={getImageUrl(product.image)} alt="" className="mt-4 h-28 w-24 border border-[#E6E6E6] object-cover" />
                 ) : null}
                 <p className="mt-3 text-sm font-light leading-7 text-[#1A1A1A]/70">
                   {[product.sphere, price, product.production_time].filter(Boolean).join(" · ")}
@@ -125,7 +126,7 @@ function MasterCabinet({
         {dialogs.length === 0 ? <p className="mt-4 text-sm font-light leading-7">Переписок пока нет.</p> : null}
         <ul className="mt-4 max-w-xl">
           {dialogs.map((dialog) => (
-            <li key={dialog.id} className="border-t border-[#E7E1D8] py-3 text-sm font-light">
+            <li key={dialog.id} className="border-t border-[#E6E6E6] py-3 text-sm font-light">
               {dialog.with_name}
               {dialog.last_text ? <span className="mt-1 block truncate text-[#1A1A1A]/55">{dialog.last_text}</span> : null}
             </li>
@@ -141,10 +142,14 @@ function Photos({ images }: { images: Photo[] }) {
     return null;
   }
   return (
-    <ul className="mt-4 flex flex-wrap gap-2">
-      {images.map((photo) => (
-        <li key={photo.src} className="h-28 w-24 border border-[#E7E1D8]">
-          <img src={getImageUrl(photo.src)} alt="" className="h-full w-full object-cover" />
+    <ul className="mt-4 flex flex-wrap gap-3">
+      {images.map((photo, index) => (
+        <li key={photo.src} className="w-28">
+          <div className="h-28 w-24 border border-[#E6E6E6]">
+            <img src={getImageUrl(photo.src)} alt={photo.description || ""} className="h-full w-full object-cover" />
+          </div>
+          {index === 0 ? <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-[#1A1A1A]/45">Основное</p> : null}
+          {photo.description ? <p className="mt-1 text-[13px] leading-5 text-[#1A1A1A]/70">{photo.description}</p> : null}
         </li>
       ))}
     </ul>
@@ -198,16 +203,16 @@ function CabinetBody() {
           </h1>
           <p className="mt-4 text-sm font-light leading-7 text-[#1A1A1A]/70">{user.role_label}</p>
           <dl className="mt-8 max-w-xl text-sm font-light leading-7">
-            <div className="flex justify-between gap-6 border-t border-[#E7E1D8] py-3">
+            <div className="flex justify-between gap-6 border-t border-[#E6E6E6] py-3">
               <dt>Почта</dt>
               <dd>{user.email}</dd>
             </div>
-            <div className="flex justify-between gap-6 border-t border-[#E7E1D8] py-3">
+            <div className="flex justify-between gap-6 border-t border-[#E6E6E6] py-3">
               <dt>Телефон</dt>
               <dd>{user.phone}</dd>
             </div>
             {cabinet.kind === "master" ? (
-              <div className="border-t border-[#E7E1D8] py-3">
+              <div className="border-t border-[#E6E6E6] py-3">
                 <dt>Резюме</dt>
                 <dd className="mt-2 max-w-xl">{user.description || "Резюме пока не заполнено."}</dd>
               </div>
@@ -223,7 +228,7 @@ function CabinetBody() {
               ) : (
                 <ul className="mt-4">
                   {cabinet.dialogs.map((dialog) => (
-                    <li key={dialog.id} className="border-t border-[#E7E1D8] py-3 text-sm font-light">
+                    <li key={dialog.id} className="border-t border-[#E6E6E6] py-3 text-sm font-light">
                       {dialog.with_name}
                       {dialog.last_text ? (
                         <span className="mt-1 block truncate text-[#1A1A1A]/55">{dialog.last_text}</span>

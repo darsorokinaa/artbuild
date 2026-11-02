@@ -19,6 +19,7 @@ export type StageMaster = {
   image?: string;
   images: StagePhoto[];
   duration?: string;
+  crafts?: string[];
 };
 
 const focusRing =
@@ -49,7 +50,7 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
             <img
               src={getImageUrl(frame.src)}
               alt={frame.description || current.title || current.owner}
-              className="aspect-[4/3] w-full bg-[#E6E4DF] object-cover object-center"
+              className="aspect-[4/3] w-full bg-[#E6E6E6] object-cover object-center"
             />
           ) : (
             <div className="aspect-[4/3] bg-white" />
@@ -63,7 +64,7 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
                   onClick={() => setPhoto(itemIndex)}
                   aria-current={itemIndex === photo ? "true" : undefined}
                   aria-label={item.description || `Фото ${itemIndex + 1}`}
-                  className={`h-16 w-24 shrink-0 bg-[#E6E4DF] ${
+                  className={`h-16 w-24 shrink-0 bg-[#E6E6E6] ${
                     itemIndex === photo ? "outline outline-1 outline-white" : "opacity-70"
                   } ${focusRing}`}
                 >
@@ -79,19 +80,19 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
               <img
                 src={getImageUrl(current.avatar)}
                 alt=""
-                className="h-8 w-8 shrink-0 bg-[#E6E4DF] object-cover object-top"
+                className="h-8 w-8 shrink-0 bg-[#E6E6E6] object-cover object-top"
               />
             ) : null}
             <p className="min-w-0 flex-1 text-4xl font-light tracking-tight">{current.owner}</p>
             <a
               href={`/masters/${current.userId}`}
-              className={`mb-1 shrink-0 bg-[#1A1A1A] px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] text-[#F6F3EE] transition-opacity hover:opacity-80 ${focusRing}`}
+              className={`mb-1 shrink-0 bg-[#1A1A1A] px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] text-[#F4F4F4] transition-opacity hover:opacity-80 ${focusRing}`}
             >
               К мастеру
             </a>
           </div>
           {current.title ? <p className="mt-4 text-sm">{current.title}</p> : null}
-          <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-[#E6E4DF] pt-3 text-sm">
+          <div className="mt-4 flex items-baseline justify-between gap-4 border-t border-[#E6E6E6] pt-3 text-sm">
             <p>{current.role}</p>
             {current.duration ? (
               <p className="shrink-0 text-[11px] uppercase tracking-[0.16em]">{current.duration}</p>
@@ -99,7 +100,7 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
           </div>
         </div>
       </div>
-      <div className="mt-10 flex items-center justify-between gap-6 border-t border-[#E6E4DF] pt-6">
+      <div className="mt-10 flex items-center justify-between gap-6 border-t border-[#E6E6E6] pt-6">
         <button
           type="button"
           onClick={() => show(index - 1)}

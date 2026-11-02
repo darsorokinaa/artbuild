@@ -18,6 +18,7 @@ const roleLabel: Record<string, string> = {
   master: "Мастер",
   designer: "Дизайнер",
   architect: "Архитектор",
+  organization: "Организация",
   customer: "Заказчик",
 };
 
@@ -122,7 +123,7 @@ export async function generateMetadata({
   const { id } = await params;
   const master = await loadMaster(id);
   return {
-    title: master?.name ? `blurrr — ${master.name}` : "blurrr — Мастер",
+    title: master?.name ? `naidista — ${master.name}` : "naidista — Мастер",
   };
 }
 
@@ -151,7 +152,7 @@ async function MasterProfile({ params }: { params: Promise<{ id: string }> }) {
           <img
             src={getImageUrl(master.avatar)}
             alt=""
-            className="h-20 w-20 bg-[#E7E1D8] object-cover object-top"
+            className="h-20 w-20 bg-[#E6E6E6] object-cover object-top"
           />
         ) : null}
         <div>

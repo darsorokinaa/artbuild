@@ -53,7 +53,7 @@ function RequestsBody() {
       {dialogs && dialogs.length > 0 ? (
         <ul className="mt-10 max-w-xl">
           {dialogs.map((dialog) => (
-            <li key={dialog.id} className="border-t border-[#E7E1D8] py-4 text-sm font-light">
+            <li key={dialog.id} className="border-t border-[#E6E6E6] py-4 text-sm font-light">
               {dialog.with_name}
               {dialog.last_text ? <span className="mt-1 block text-[#1A1A1A]/55">{dialog.last_text}</span> : null}
             </li>

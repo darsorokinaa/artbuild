@@ -155,7 +155,11 @@ class PortfolioSerializer(serializers.ModelSerializer):
         return request.build_absolute_uri(url)
 
     def get_image(self, work):
-        photo = next((item for item in work.images.all() if item.image), None)
+        photos = sorted(
+            (item for item in work.images.all() if item.image),
+            key=lambda item: (item.sort_order, item.id),
+        )
+        photo = photos[0] if photos else None
         if photo is None:
             return None
         request = self.context.get('request')

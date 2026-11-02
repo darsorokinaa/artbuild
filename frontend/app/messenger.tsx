@@ -259,7 +259,7 @@ export function Messenger({
         aria-labelledby="messenger-title"
         className="relative z-10 flex h-full w-full max-w-3xl flex-col bg-white"
       >
-        <header className="flex items-start justify-between gap-4 border-b border-[#E7E1D8] px-6 py-5">
+        <header className="flex items-start justify-between gap-4 border-b border-[#E6E6E6] px-6 py-5">
           <div>
             <p className="text-[11px] font-light uppercase tracking-[0.22em] text-[#1A1A1A]/45">
               {thread?.me_name ? `Диалоги · ${thread.me_name}` : "Диалоги"}
@@ -283,7 +283,7 @@ export function Messenger({
           </button>
         </header>
         <div className="flex min-h-0 flex-1">
-          <aside className="w-52 shrink-0 overflow-y-auto border-r border-[#E7E1D8] py-2">
+          <aside className="w-52 shrink-0 overflow-y-auto border-r border-[#E6E6E6] py-2">
             {(thread?.dialogs ?? []).map((dialog) => (
               <button
                 key={dialog.id}
@@ -319,7 +319,7 @@ export function Messenger({
                     <img
                       src={getImageUrl(message.image)}
                       alt={message.title || ""}
-                      className="mt-3 aspect-[5/4] w-full bg-[#E7E1D8] object-cover object-center"
+                      className="mt-3 aspect-[5/4] w-full bg-[#E6E6E6] object-cover object-center"
                     />
                   ) : null}
                   {message.description ? <p className="mt-3">{message.description}</p> : null}
@@ -328,9 +328,9 @@ export function Messenger({
                 </div>
               ))}
             </div>
-            <form onSubmit={send} className="border-t border-[#E7E1D8] px-6 py-4">
+            <form onSubmit={send} className="border-t border-[#E6E6E6] px-6 py-4">
               {draft && thread?.id === draft.dialogId ? (
-                <div className="border border-[#E7E1D8] p-3">
+                <div className="border border-[#E6E6E6] p-3">
                   <textarea
                     value={text}
                     onChange={(event) => setText(event.target.value)}
@@ -342,7 +342,7 @@ export function Messenger({
                     <img
                       src={getImageUrl(draft.image)}
                       alt=""
-                      className="mt-3 aspect-[5/4] max-h-48 w-full bg-[#E7E1D8] object-cover object-center"
+                      className="mt-3 aspect-[5/4] max-h-48 w-full bg-[#E6E6E6] object-cover object-center"
                     />
                   ) : null}
                 </div>
@@ -352,7 +352,7 @@ export function Messenger({
                   onChange={(event) => setText(event.target.value)}
                   placeholder="Сообщение"
                   aria-label="Сообщение"
-                  className="w-full border-b border-[#E7E1D8] bg-transparent py-2 text-sm font-light outline-none"
+                  className="w-full border-b border-[#E6E6E6] bg-transparent py-2 text-sm font-light outline-none"
                 />
               )}
               <div className="mt-3 flex justify-end">

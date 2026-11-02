@@ -4,8 +4,8 @@ import { MastersCatalog, StageFallback } from "../masters-window";
 import { SiteShell } from "../site-shell";
 
 export const metadata: Metadata = {
-  title: "blurrr — Мастера",
-  description: "Каталог мастеров blurrr: профили и работы.",
+  title: "naidista — Мастера",
+  description: "Каталог мастеров naidista: профили и работы.",
 };
 
 export default function MastersPage() {

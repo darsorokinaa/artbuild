@@ -91,30 +91,16 @@ export async function ProductsCatalog() {
   );
 
   return (
-    <section className="mx-auto w-full max-w-[1680px] px-4 py-12 text-[#242321] sm:px-8 lg:px-10 lg:py-16">
-      <p className="text-[11px] tracking-[0.28em] text-[#77736E]">
-        <span className="lowercase">blurrr</span>
-        <span className="uppercase"> / Каталог</span>
-      </p>
-      <h1 className="mt-5 max-w-3xl font-[family-name:var(--font-display)] text-5xl font-medium leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
-        Изделия
-      </h1>
-      <p className="mt-5 max-w-xl text-base font-light leading-7 text-[#77736E]">
-        Авторские работы, искусство и предметы интерьера от независимых мастеров.
-      </p>
-      {products.length === 0 ? (
-        <p className="mt-16 text-sm font-light leading-7 text-[#77736E]">Изделий пока нет.</p>
-      ) : (
-        <ProductsCatalogList products={products} filters={filters} />
-      )}
+    <section className="px-5 py-8 md:px-8 md:py-10">
+      <ProductsCatalogList products={products} filters={filters} />
     </section>
   );
 }
 
 function CatalogMessage({ children }: { children: string }) {
   return (
-    <section className="mx-auto w-full max-w-[1680px] px-4 py-16 text-[#242321] sm:px-8 lg:px-10">
-      <p className="text-sm font-light leading-7 text-[#77736E]">{children}</p>
+    <section className="mx-auto w-full max-w-[1680px] px-4 py-16 text-[#242424] sm:px-8 lg:px-10">
+      <p className="text-sm font-light leading-7 text-[#767676]">{children}</p>
     </section>
   );
 }

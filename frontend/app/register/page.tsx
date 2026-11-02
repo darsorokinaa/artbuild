@@ -1,30 +1,49 @@
-"use client";
-
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { connection } from "next/server";
 import { SiteShell } from "../site-shell";
 import { MasterRegister } from "../master-register";
 
-function RegisterForm() {
-  const kind = useSearchParams().get("kind") === "master" ? "master" : "customer";
+export const metadata = {
+  title: "naidista — Регистрация",
+  description: "Создайте профиль мастера или заказчика на naidista.",
+};
+
+export default function RegisterPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ kind?: string; specialty?: string }>;
+}) {
   return (
-    <div className="overflow-x-clip bg-[#F5F3EF] text-[#242321] lg:grid lg:grid-cols-[minmax(0,650px)_minmax(0,1fr)]">
-      <div className="px-5 py-10 sm:px-10 lg:px-14 lg:py-16">
-        <MasterRegister initialKind={kind} />
-      </div>
-      <div className="relative hidden min-h-[80vh] lg:block">
-        <img src="/hero.jpg" alt="" className="absolute inset-0 h-full w-full object-cover" />
-      </div>
+    <SiteShell>
+      <Suspense fallback={<RegisterFallback />}>
+        <RegisterBody searchParams={searchParams} />
+      </Suspense>
+    </SiteShell>
+  );
+}
+
+async function RegisterBody({ searchParams }: { searchParams: Promise<{ kind?: string; specialty?: string }> }) {
+  await connection();
+  const params = await searchParams;
+  const kind = params.kind === "master" ? "master" : "customer";
+  const specialty = params.specialty === "architect" || params.specialty === "designer" ? params.specialty : "master";
+  return <RegisterLayout kind={kind} specialty={specialty} />;
+}
+
+function RegisterLayout({
+  kind,
+  specialty = "master",
+}: {
+  kind: "master" | "customer";
+  specialty?: "master" | "designer" | "architect";
+}) {
+  return (
+    <div className="overflow-x-clip bg-[#F4F4F4] text-[#242424]">
+      <MasterRegister initialKind={kind} initialSpecialty={specialty} />
     </div>
   );
 }
 
-export default function RegisterPage() {
-  return (
-    <SiteShell>
-      <Suspense fallback={null}>
-        <RegisterForm />
-      </Suspense>
-    </SiteShell>
-  );
+function RegisterFallback() {
+  return <RegisterLayout kind="customer" />;
 }

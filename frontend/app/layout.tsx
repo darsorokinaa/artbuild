@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "blurrr",
+  title: "naidista",
   description: "Изделия и мастера: оставьте задание или покажите свои работы.",
 };
 

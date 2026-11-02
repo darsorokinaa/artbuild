@@ -105,7 +105,7 @@ function WorkDialog({ work, onClose }: { work: ProfileWork; onClose: () => void 
                 <img
                   src={getImageUrl(photo.src)}
                   alt={photo.description || work.title}
-                  className="aspect-[4/3] w-full bg-[#E7E1D8] object-cover object-center"
+                  className="aspect-[4/3] w-full bg-[#E6E6E6] object-cover object-center"
                 />
                 {photo.description ? (
                   <figcaption className="mt-3 text-sm font-light leading-7 text-[#1A1A1A]/70">
@@ -144,16 +144,16 @@ export function MasterProfileBody({
         ) : (
           <div className="mt-8">
             {portfolios.map((work) => (
-              <article key={work.id} className="grid grid-cols-1 gap-6 border-t border-[#E7E1D8] py-10 md:grid-cols-12">
+              <article key={work.id} className="grid grid-cols-1 gap-6 border-t border-[#E6E6E6] py-10 md:grid-cols-12">
                 <div className="md:col-span-5">
                   {work.image ? (
                     <img
                       src={getImageUrl(work.image)}
                       alt={work.title}
-                      className="aspect-[5/4] w-full bg-[#E7E1D8] object-cover object-center"
+                      className="aspect-[5/4] w-full bg-[#E6E6E6] object-cover object-center"
                     />
                   ) : (
-                    <div className="aspect-[5/4] bg-[#E7E1D8]" />
+                    <div className="aspect-[5/4] bg-[#E6E6E6]" />
                   )}
                 </div>
                 <div className="md:col-span-7">
@@ -169,7 +169,7 @@ export function MasterProfileBody({
                   <button
                     type="button"
                     onClick={() => setOpen(work)}
-                    className="mt-6 bg-[#1A1A1A] px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] text-[#F6F3EE] transition-opacity hover:opacity-80"
+                    className="mt-6 bg-[#1A1A1A] px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] text-[#F4F4F4] transition-opacity hover:opacity-80"
                   >
                     Открыть
                   </button>
@@ -212,17 +212,17 @@ export function MasterProfileBody({
               return (
                 <article
                   key={product.id}
-                  className="grid grid-cols-1 gap-6 border-t border-[#E7E1D8] py-10 md:grid-cols-12"
+                  className="grid grid-cols-1 gap-6 border-t border-[#E6E6E6] py-10 md:grid-cols-12"
                 >
                   <div className="md:col-span-5">
                     {product.image ? (
                       <img
                         src={getImageUrl(product.image)}
                         alt={product.title}
-                        className="aspect-[5/4] w-full bg-[#E7E1D8] object-cover object-center"
+                        className="aspect-[5/4] w-full bg-[#E6E6E6] object-cover object-center"
                       />
                     ) : (
-                      <div className="aspect-[5/4] bg-[#E7E1D8]" />
+                      <div className="aspect-[5/4] bg-[#E6E6E6]" />
                     )}
                   </div>
                   <div className="md:col-span-7">

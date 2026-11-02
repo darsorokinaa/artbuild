@@ -8,7 +8,7 @@ from django.utils import timezone
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .models import CatalogFilter, Conversation, PorfolioImage, Portfolio, Product, User
+from .models import CatalogFilter, Conversation, MakerProfile, PorfolioImage, Portfolio, Product, User
 from .serializers import ProductSerializer
 
 
@@ -40,9 +40,10 @@ def masters_queryset():
         output_field=IntegerField(),
     )
     return (
-        User.objects.filter(role__in=[User.Role.MASTER, User.Role.DESIGNER, User.Role.ARCHITECT])
+        User.objects.filter(role__in=[User.Role.MASTER, User.Role.DESIGNER, User.Role.ARCHITECT, User.Role.ORGANIZATION])
         .annotate(role_order=role_order)
         .order_by('role_order', 'id')
+        .select_related('maker_profile')
         .prefetch_related(
             Prefetch(
                 'portfolios',
@@ -57,13 +58,16 @@ def masters_queryset():
 
 
 def work_images(request, work):
+    photos = sorted(
+        (photo for photo in work.images.all() if photo.image),
+        key=lambda photo: (photo.sort_order, photo.id),
+    )
     return [
         {
             'src': request.build_absolute_uri(photo.image.url),
             'description': photo.description,
         }
-        for photo in work.images.all()
-        if photo.image
+        for photo in photos
     ]
 
 
@@ -136,6 +140,32 @@ def product_payload(request, product):
     }
 
 
+WORK_CRAFTS = {
+    'painting': 'Живопись',
+    'graphic': 'Живопись',
+    'furniture': 'Мебель',
+    'sculpture': 'Скульптура',
+    'textile': 'Текстиль',
+    'tableware': 'Посуда',
+    'plaster': 'Декор',
+    'mosaic': 'Декор',
+    'events': 'Декор',
+}
+
+
+def maker_crafts(person):
+    try:
+        profile = person.maker_profile
+    except MakerProfile.DoesNotExist:
+        return []
+    crafts = []
+    for code in profile.works or []:
+        label = WORK_CRAFTS.get(code)
+        if label and label not in crafts:
+            crafts.append(label)
+    return crafts
+
+
 def master_payload(request, person):
     name = f'{person.first_name} {person.last_name}'.strip()
     avatar = request.build_absolute_uri(person.avatar.url) if person.avatar else None
@@ -168,6 +198,7 @@ def masters(request):
                 'image': work['image'] if work else None,
                 'images': work['images'] if work else [],
                 'duration': work['duration'] if work else '',
+                'crafts': maker_crafts(person),
             })
     return Response(cards)
 
@@ -203,6 +234,7 @@ ROLE_LABELS = {
     User.Role.MASTER: 'Мастер',
     User.Role.DESIGNER: 'Дизайнер',
     User.Role.ARCHITECT: 'Архитектор',
+    User.Role.ORGANIZATION: 'Организация',
     User.Role.CUSTOMER: 'Заказчик',
 }
 MASTER_ROLES = {User.Role.MASTER, User.Role.DESIGNER, User.Role.ARCHITECT}
@@ -416,63 +448,204 @@ def image_problem(upload):
 
 
 def master_materials(request):
-    description = str(request.data.get('portfolio_description') or '').strip()
-    images = list(request.FILES.getlist('portfolio'))
-    if not description:
-        return None, 'Опишите портфолио.'
-    if len(images) != 1:
-        return None, 'У портфолио одно основное фото.'
-    for upload in images:
-        problem = image_problem(upload)
-        if problem:
-            return None, problem
     try:
-        works = json.loads(request.data.get('works') or '[]')
+        portfolios = json.loads(request.data.get('portfolios') or '[]')
     except (TypeError, json.JSONDecodeError):
-        return None, 'Добавьте хотя бы одну работу.'
-    if not isinstance(works, list) or not works:
-        return None, 'Добавьте хотя бы одну работу.'
+        return None, 'Добавьте портфолио.'
+    if not isinstance(portfolios, list) or not portfolios:
+        return None, 'Добавьте портфолио.'
     prepared = []
-    for index, work in enumerate(works):
-        if not isinstance(work, dict):
-            return None, 'Добавьте хотя бы одну работу.'
-        title = str(work.get('title') or '').strip()
-        text = str(work.get('description') or '').strip()
+    for index, item in enumerate(portfolios):
+        if not isinstance(item, dict):
+            return None, 'Добавьте портфолио.'
+        title = str(item.get('title') or '').strip()
+        text = str(item.get('description') or '').strip()
         if not title or not text:
             return None, 'Укажите название и описание работы.'
         if len(title) > 300:
             return None, 'Название работы слишком длинное.'
-        photos = [request.FILES.get(f'work_{index}_{slot}') for slot in range(3)]
-        if any(photo is None for photo in photos):
-            return None, 'У каждой работы должно быть три фотографии.'
-        for photo in photos:
-            problem = image_problem(photo)
+        captions = item.get('photos')
+        if not isinstance(captions, list) or not captions:
+            return None, 'Добавьте фотографию портфолио.'
+        photos = []
+        for slot, caption in enumerate(captions):
+            upload = request.FILES.get(f'portfolio_{index}_{slot}')
+            problem = image_problem(upload)
+            if problem == 'missing':
+                return None, 'Добавьте фотографию портфолио.'
             if problem:
                 return None, problem
+            description = str(caption.get('description') or '').strip() if isinstance(caption, dict) else ''
+            if not description:
+                return None, 'Добавьте описание к каждой фотографии.'
+            photos.append((upload, description))
         prepared.append((title, text, photos))
-    return (description, images, prepared), ''
+    return prepared, ''
 
 
-def save_master_materials(user, materials):
-    description, images, works = materials
-    cover = Portfolio.objects.create(
-        portfolio_owner=user,
-        portfolio_title='Портфолио',
-        portfolio_description=description,
-        main=True,
-        status=Portfolio.Status.DRAFT,
-    )
-    for image in images:
-        PorfolioImage.objects.create(portfolio_id=cover, image=image)
-    for title, text, photos in works:
+def save_master_materials(user, portfolios):
+    for index, (title, text, photos) in enumerate(portfolios):
         work = Portfolio.objects.create(
             portfolio_owner=user,
             portfolio_title=title,
             portfolio_description=text,
+            main=index == 0,
             status=Portfolio.Status.DRAFT,
         )
-        for photo in photos:
-            PorfolioImage.objects.create(portfolio_id=work, image=photo)
+        for order, (photo, description) in enumerate(photos):
+            PorfolioImage.objects.create(
+                portfolio=work,
+                image=photo,
+                description=description,
+                sort_order=order,
+            )
+
+
+ARTIST_WORKS = {
+    'painting', 'graphic', 'furniture', 'photo', 'sculpture', 'textile', 'tableware', 'other',
+}
+ORGANIZATION_WORKS = {'plaster', 'furniture', 'mosaic', 'events', 'other'}
+ARTIST_MATERIALS = {'watercolor', 'oil', 'ceramic', 'plaster', 'wood'}
+ORGANIZATION_MATERIALS = {'plastic', 'gypsum', 'ceramic', 'plaster', 'wood', 'other'}
+
+
+def chosen_codes(raw, allowed):
+    try:
+        values = json.loads(raw or '[]')
+    except (TypeError, json.JSONDecodeError):
+        return None
+    if not isinstance(values, list):
+        return None
+    codes = []
+    for value in values:
+        code = str(value or '').strip()
+        if code not in allowed or code in codes:
+            continue
+        codes.append(code)
+    return codes
+
+
+def work_uploads(request):
+    photos = []
+    index = 0
+    while True:
+        upload = request.FILES.get(f'work_{index}')
+        if upload is None:
+            break
+        problem = image_problem(upload)
+        if problem:
+            return None, 'Нужны фотографии.' if problem == 'missing' else problem
+        photos.append(upload)
+        index += 1
+        if index > 12:
+            return None, 'Слишком много фотографий.'
+    return photos, ''
+
+
+def register_maker(request, fields):
+    kind = fields['kind']
+    if not fields['email'] or '@' not in fields['email'] or len(fields['email']) < 5:
+        return Response({'detail': 'Укажите почту.'}, status=400)
+    if len(fields['phone']) < 6:
+        return Response({'detail': 'Укажите телефон.'}, status=400)
+    if len(fields['password']) < 8:
+        return Response({'detail': 'Пароль должен быть не короче 8 символов.'}, status=400)
+    if User.objects.filter(email__iexact=fields['email']).exists():
+        return Response({'detail': 'Такая почта уже зарегистрирована.'}, status=400)
+    if User.objects.filter(phone=fields['phone']).exists():
+        return Response({'detail': 'Такой телефон уже зарегистрирован.'}, status=400)
+    display_name = str(request.data.get('display_name') or '').strip()
+    description = fields['description']
+    photo_choice = str(request.data.get('photo_choice') or '').strip()
+    if photo_choice not in {MakerProfile.PhotoChoice.OWN, MakerProfile.PhotoChoice.STUDIO}:
+        return Response({'detail': 'Выберите, как поступить с фотографиями.'}, status=400)
+    if kind == 'artist':
+        works = chosen_codes(request.data.get('works'), ARTIST_WORKS)
+        materials = chosen_codes(request.data.get('materials'), ARTIST_MATERIALS)
+        work_allowed = ARTIST_WORKS
+    else:
+        works = chosen_codes(request.data.get('works'), ORGANIZATION_WORKS)
+        materials = chosen_codes(request.data.get('materials'), ORGANIZATION_MATERIALS)
+        work_allowed = ORGANIZATION_WORKS
+    if works is None or materials is None:
+        return Response({'detail': 'Выберите варианты из списка.'}, status=400)
+    work_other = str(request.data.get('work_other') or '').strip()
+    material_other = str(request.data.get('material_other') or '').strip()
+    if not works or ('other' in works and not work_other):
+        return Response({'detail': 'Выберите, чем вы занимаетесь.'}, status=400)
+    if 'other' not in work_allowed:
+        work_other = ''
+    if not materials or ('other' in materials and not material_other):
+        return Response({'detail': 'Выберите материалы.'}, status=400)
+    if kind != 'organization':
+        material_other = ''
+    if not display_name:
+        return Response({'detail': 'Укажите название компании.' if kind == 'organization' else 'Укажите имя или псевдоним.'}, status=400)
+    if len(display_name) > 150:
+        return Response({'detail': 'Имя слишком длинное.'}, status=400)
+    if not description:
+        return Response({'detail': 'Опишите предлагаемые работы.' if kind == 'organization' else 'Опишите ваше искусство.'}, status=400)
+    age = None
+    education = ''
+    if kind == 'artist':
+        raw_age = str(request.data.get('age') or '').strip()
+        if not raw_age.isdigit() or not 1 <= int(raw_age) <= 120:
+            return Response({'detail': 'Укажите возраст.'}, status=400)
+        age = int(raw_age)
+        education = str(request.data.get('education') or '').strip()
+        if not education:
+            return Response({'detail': 'Укажите образование.'}, status=400)
+    portrait = request.FILES.get('portrait')
+    portrait_problem = image_problem(portrait)
+    if portrait_problem == 'missing':
+        return Response({'detail': 'Добавьте логотип.' if kind == 'organization' else 'Добавьте фото.'}, status=400)
+    if portrait_problem:
+        return Response({'detail': portrait_problem}, status=400)
+    photos, photo_problem = work_uploads(request)
+    if photo_problem:
+        return Response({'detail': photo_problem}, status=400)
+    if photo_choice == MakerProfile.PhotoChoice.OWN and not photos:
+        return Response({'detail': 'Добавьте фотографии работ.'}, status=400)
+    role = User.Role.MASTER if kind == 'artist' else User.Role.ORGANIZATION
+    with transaction.atomic():
+        user = User.objects.create_user(
+            username=fields['email'],
+            email=fields['email'],
+            password=fields['password'],
+            first_name=display_name,
+            last_name='',
+            phone=fields['phone'],
+            role=role,
+            description=description,
+        )
+        user.avatar.save(portrait.name, portrait, save=True)
+        MakerProfile.objects.create(
+            user=user,
+            kind=kind,
+            works=works,
+            work_other=work_other if 'other' in works else '',
+            photo_choice=photo_choice,
+            age=age,
+            education=education,
+            materials=materials,
+            material_other=material_other if 'other' in materials else '',
+        )
+        if photos:
+            work = Portfolio.objects.create(
+                portfolio_owner=user,
+                portfolio_title='Работы',
+                portfolio_description=description,
+                main=True,
+                status=Portfolio.Status.DRAFT,
+            )
+            for order, photo in enumerate(photos):
+                PorfolioImage.objects.create(
+                    portfolio=work,
+                    image=photo,
+                    description='Фото работы',
+                    sort_order=order,
+                )
+    return Response({'token': issue_token(user), 'user': account_payload(user)})
 
 
 def registration_fields(data):
@@ -493,6 +666,8 @@ def registration_fields(data):
 @permission_classes([AllowAny])
 def register(request):
     fields = registration_fields(request.data)
+    if fields['kind'] in {'artist', 'organization'}:
+        return register_maker(request, fields)
     if fields['kind'] not in {'master', 'customer'}:
         return Response({'detail': 'Выберите, кто регистрируется.'}, status=400)
     if not fields['first_name'] or not fields['last_name']:
