@@ -133,7 +133,7 @@ export function AuthPanel({
   }
 
   return (
-    <section className="px-6 py-6 md:px-12 lg:px-16">
+    <section className="px-9 py-6 md:px-[25.2rem] lg:px-[33.6rem]">
       <div className="mx-auto w-full max-w-[540px]">
         <p className="text-[11px] font-light uppercase tracking-[0.32em] text-[#1A1A1A]/45">Учётная запись</p>
         <h1 className="mt-4 font-[family-name:var(--font-display)] text-[2.5rem] font-light leading-none">

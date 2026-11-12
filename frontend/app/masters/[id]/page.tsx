@@ -132,15 +132,15 @@ async function MasterProfile({ params }: { params: Promise<{ id: string }> }) {
   const master = await loadMaster(id);
 
   if (master === undefined) {
-    return <p className="px-6 py-16 text-sm font-light md:px-12 lg:px-16">Карточка временно недоступна.</p>;
+    return <p className="px-9 py-16 text-sm font-light md:px-[25.2rem] lg:px-[33.6rem]">Карточка временно недоступна.</p>;
   }
 
   if (master === null) {
-    return <p className="px-6 py-16 text-sm font-light md:px-12 lg:px-16">Такого мастера нет.</p>;
+    return <p className="px-9 py-16 text-sm font-light md:px-[25.2rem] lg:px-[33.6rem]">Такого мастера нет.</p>;
   }
 
   return (
-    <article className="px-6 py-12 md:px-12 md:py-16 lg:px-16">
+    <article className="px-9 py-12 md:px-[25.2rem] md:py-16 lg:px-[33.6rem]">
       <a
         href="/masters"
         className="text-[11px] font-light uppercase tracking-[0.22em] underline decoration-[#1A1A1A]/25 underline-offset-8 hover:decoration-[#1A1A1A]"
@@ -180,7 +180,7 @@ async function MasterProfile({ params }: { params: Promise<{ id: string }> }) {
 export default function MasterPage({ params }: { params: Promise<{ id: string }> }) {
   return (
     <SiteShell>
-      <Suspense fallback={<p className="px-6 py-16 text-sm font-light md:px-12 lg:px-16">Загрузка</p>}>
+      <Suspense fallback={<p className="px-9 py-16 text-sm font-light md:px-[25.2rem] lg:px-[33.6rem]">Загрузка</p>}>
         <MasterProfile params={params} />
       </Suspense>
     </SiteShell>

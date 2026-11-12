@@ -49,7 +49,7 @@ const menu = [
 function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 bg-[#F4F4F4]/90 backdrop-blur-sm">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-5 py-4 md:gap-x-4 md:px-8">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2 px-[1.875rem] py-4 md:gap-x-4 md:px-[16.8rem]">
         <a
           href="/"
           className={`mr-2 font-[family-name:var(--font-wordmark)] text-[1.7rem] font-medium lowercase leading-none tracking-tight ${focusRing}`}
@@ -75,7 +75,7 @@ function SiteHeader() {
 
 function SiteFooter() {
   return (
-    <footer className="flex items-center justify-between py-8 pl-6 pr-24 text-[12px] text-[#1A1A1A]/45 md:pl-8 md:pr-28">
+    <footer className="flex items-center justify-between py-8 pl-9 pr-[6.75rem] text-[12px] text-[#1A1A1A]/45 md:pl-[16.8rem] md:pr-[21.8rem]">
       <span className="font-[family-name:var(--font-wordmark)] text-lg lowercase text-[#1A1A1A]">naidista</span>
       <span>Изделия и мастера</span>
     </footer>

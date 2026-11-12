@@ -193,7 +193,7 @@ function CabinetBody() {
   const user = cabinet?.user;
 
   return (
-    <section className="px-6 py-12 md:px-12 md:py-16 lg:px-16">
+    <section className="px-9 py-12 md:px-[25.2rem] md:py-16 lg:px-[33.6rem]">
       <p className="text-[11px] font-light uppercase tracking-[0.32em] text-[#1A1A1A]/55">Личный кабинет</p>
       {error ? <p className="mt-8 text-sm font-light leading-7">{error}</p> : null}
       {!user ? null : (

@@ -43,7 +43,7 @@ export function MasterStage({ masters }: { masters: StageMaster[] }) {
   }
 
   return (
-    <section id="masters" className="scroll-mt-28 px-6 pb-16 pt-8 md:px-12 lg:px-16">
+    <section id="masters" className="scroll-mt-28 px-9 pb-16 pt-8 md:px-[25.2rem] lg:px-[33.6rem]">
       <div className="grid grid-cols-1 items-end gap-8 lg:grid-cols-12 lg:gap-12">
         <figure className="relative lg:col-span-8">
           {frame ? (

@@ -91,7 +91,7 @@ export async function ProductsCatalog() {
   );
 
   return (
-    <section className="px-5 py-8 md:px-8 md:py-10">
+    <section className="px-[1.875rem] py-8 md:px-[16.8rem] md:py-10">
       <ProductsCatalogList products={products} filters={filters} />
     </section>
   );
@@ -99,7 +99,7 @@ export async function ProductsCatalog() {
 
 function CatalogMessage({ children }: { children: string }) {
   return (
-    <section className="mx-auto w-full max-w-[1680px] px-4 py-16 text-[#242424] sm:px-8 lg:px-10">
+    <section className="mx-auto w-full max-w-[1680px] px-6 py-16 text-[#242424] sm:px-12 lg:px-[21rem]">
       <p className="text-sm font-light leading-7 text-[#767676]">{children}</p>
     </section>
   );

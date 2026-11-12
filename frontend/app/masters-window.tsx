@@ -12,7 +12,7 @@ const roleLabel: Record<string, string> = {
 
 export function StageFallback() {
   return (
-    <section className="px-5 py-8 md:px-8 md:py-10">
+    <section className="px-[1.875rem] py-8 md:px-[16.8rem] md:py-10">
       <div className="min-h-[28rem] border border-[#E6E6E6] bg-white" />
     </section>
   );
@@ -84,11 +84,11 @@ export async function MastersWindow() {
   const gallery = await loadMasters();
 
   if (gallery === null) {
-    return <p className="px-6 py-16 text-sm md:px-12 lg:px-16">Галерея временно недоступна.</p>;
+    return <p className="px-9 py-16 text-sm md:px-[25.2rem] lg:px-[33.6rem]">Галерея временно недоступна.</p>;
   }
 
   if (gallery.length === 0) {
-    return <p className="px-6 py-16 text-sm md:px-12 lg:px-16">Основных работ пока нет.</p>;
+    return <p className="px-9 py-16 text-sm md:px-[25.2rem] lg:px-[33.6rem]">Основных работ пока нет.</p>;
   }
 
   return <MasterStage masters={gallery} />;
@@ -98,11 +98,11 @@ export async function MastersCatalog() {
   const gallery = await loadMasters();
 
   if (gallery === null) {
-    return <p className="px-6 py-16 text-sm md:px-12 lg:px-16">Каталог временно недоступен.</p>;
+    return <p className="px-9 py-16 text-sm md:px-[25.2rem] lg:px-[33.6rem]">Каталог временно недоступен.</p>;
   }
 
   return (
-    <section className="px-5 py-8 md:px-8 md:py-10">
+    <section className="px-[1.875rem] py-8 md:px-[16.8rem] md:py-10">
       <h1 className="sr-only">Мастера</h1>
       <div className="border border-[#E6E6E6] bg-white px-5 py-8 md:px-10 md:py-12">
         <MastersCatalogList masters={gallery} />

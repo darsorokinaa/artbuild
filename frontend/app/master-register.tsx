@@ -432,7 +432,7 @@ export function MasterRegister({
 
   return (
     <div className={wide ? "" : "lg:grid lg:grid-cols-[minmax(0,650px)_minmax(0,1fr)]"}>
-      <div className="px-5 py-10 sm:px-10 lg:px-14 lg:py-16">
+      <div className="px-[1.875rem] py-10 sm:px-[3.75rem] lg:px-[29.4rem] lg:py-16">
     <div className={`mx-auto w-full pb-24 ${wide ? "max-w-3xl" : "max-w-[560px]"}`}>
       <p className="text-[11px] tracking-[0.28em] text-[#767676]">
         <span className="lowercase">naidista</span>
