@@ -659,3 +659,248 @@ class MakerProfile(models.Model):
         return f'{self.get_kind_display()} — {self.user}'
 
 
+# =========================
+# ЗАДАЧИ ЗАКАЗЧИКОВ
+# =========================
+
+class Task(models.Model):
+
+    class Status(models.TextChoices):
+        OPEN = 'open', 'Открыта'
+        IN_PROGRESS = 'in_progress', 'В работе'
+        CLOSED = 'closed', 'Закрыта'
+
+    class BudgetKind(models.TextChoices):
+        FIXED = 'fixed', 'Фикс'
+        UP_TO = 'up_to', 'До'
+
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='tasks',
+        verbose_name='Заказчик'
+    )
+
+    assignee = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        related_name='assigned_tasks',
+        null=True,
+        blank=True,
+        verbose_name='Исполнитель'
+    )
+
+    title = models.CharField(
+        max_length=300,
+        verbose_name='Название'
+    )
+
+    description = models.TextField(
+        verbose_name='Описание'
+    )
+
+    category = models.CharField(
+        max_length=100,
+        verbose_name='Категория'
+    )
+
+    budget = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name='Бюджет, ₽'
+    )
+
+    budget_kind = models.CharField(
+        max_length=20,
+        choices=BudgetKind.choices,
+        default=BudgetKind.FIXED,
+        verbose_name='Тип бюджета'
+    )
+
+    deadline = models.CharField(
+        max_length=100,
+        verbose_name='Сроки'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.OPEN,
+        verbose_name='Статус'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата создания'
+    )
+
+    updated_at = models.DateTimeField(
+        auto_now=True,
+        verbose_name='Дата обновления'
+    )
+
+    class Meta:
+        verbose_name = 'Задача'
+        verbose_name_plural = 'Задачи'
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return self.title
+
+
+class TaskImage(models.Model):
+
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name='Задача'
+    )
+
+    image = models.ImageField(
+        upload_to='tasks/',
+        verbose_name='Референс'
+    )
+
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок'
+    )
+
+    class Meta:
+        verbose_name = 'Референс задачи'
+        verbose_name_plural = 'Референсы задач'
+        ordering = ['sort_order', 'id']
+
+    def __str__(self):
+        return f'Референс для {self.task.title}'
+
+
+class TaskResponse(models.Model):
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'На рассмотрении'
+        CHOSEN = 'chosen', 'Выбран'
+        REJECTED = 'rejected', 'Отклонён'
+
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        related_name='responses',
+        verbose_name='Задача'
+    )
+
+    artist = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='task_responses',
+        verbose_name='Художник'
+    )
+
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name='Цена, ₽'
+    )
+
+    deadline = models.CharField(
+        max_length=100,
+        verbose_name='Сроки'
+    )
+
+    message = models.TextField(
+        verbose_name='Сообщение'
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+        verbose_name='Статус'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата отклика'
+    )
+
+    class Meta:
+        verbose_name = 'Отклик'
+        verbose_name_plural = 'Отклики'
+        ordering = ['-created_at', '-id']
+        constraints = [
+            models.UniqueConstraint(fields=['task', 'artist'], name='unique_task_response'),
+        ]
+
+    def __str__(self):
+        return f'Отклик {self.artist_id} на {self.task_id}'
+
+
+class TaskResponseImage(models.Model):
+
+    response = models.ForeignKey(
+        TaskResponse,
+        on_delete=models.CASCADE,
+        related_name='images',
+        verbose_name='Отклик'
+    )
+
+    image = models.ImageField(
+        upload_to='responses/',
+        verbose_name='Пример работы'
+    )
+
+    sort_order = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Порядок'
+    )
+
+    class Meta:
+        verbose_name = 'Пример в отклике'
+        verbose_name_plural = 'Примеры в откликах'
+        ordering = ['sort_order', 'id']
+
+    def __str__(self):
+        return f'Пример для отклика {self.response_id}'
+
+
+class Notice(models.Model):
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='notices',
+        verbose_name='Получатель'
+    )
+
+    text = models.CharField(
+        max_length=300,
+        verbose_name='Текст'
+    )
+
+    href = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        verbose_name='Ссылка'
+    )
+
+    read = models.BooleanField(
+        default=False,
+        verbose_name='Прочитано'
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Дата'
+    )
+
+    class Meta:
+        verbose_name = 'Уведомление'
+        verbose_name_plural = 'Уведомления'
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return self.text
+
+

@@ -1,14 +1,30 @@
 import json
+from decimal import Decimal, InvalidOperation
 
 from django.core import signing
 from django.db import transaction
-from django.db.models import Case, IntegerField, Prefetch, Q, Value, When
+from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from .models import CatalogFilter, Conversation, MakerProfile, PorfolioImage, Portfolio, Product, User
+from .models import (
+    CatalogFilter,
+    Conversation,
+    MakerProfile,
+    Notice,
+    PorfolioImage,
+    Portfolio,
+    Product,
+    ProductImage,
+    ProductType,
+    Task,
+    TaskImage,
+    TaskResponse,
+    TaskResponseImage,
+    User,
+)
 from .serializers import ProductSerializer
 
 
@@ -745,9 +761,447 @@ def account_home(request):
             item['main'] = work.main
             portfolios.append(item)
         payload['portfolios'] = portfolios
-        products = user.products.select_related('product_type').prefetch_related('images', 'reviews__author')
+        products = user.products.select_related('product_type').prefetch_related('images', 'reviews__author', 'filters')
         payload['products'] = [
             {**product_payload(request, product), 'status': product.get_status_display()}
             for product in products
         ]
+        payload['responses'] = account_responses(request, user)
+    else:
+        payload['tasks'] = account_tasks(request, user)
+    payload['notices'] = consume_notices(user)
     return Response(payload)
+
+
+WORK_CATEGORIES = ('Скульптура', 'Живопись', 'Декор', 'Мебель', 'Текстиль')
+
+CATEGORY_SPHERE = {
+    'Скульптура': ProductType.Sphere.SCULPTURE,
+    'Живопись': ProductType.Sphere.FINE_ART,
+    'Декор': ProductType.Sphere.DECORATION,
+    'Мебель': ProductType.Sphere.FURNITURE_DESIGN,
+    'Текстиль': ProductType.Sphere.TEXTILE,
+}
+
+SELLER_ROLES = {
+    User.Role.MASTER,
+    User.Role.DESIGNER,
+    User.Role.ARCHITECT,
+    User.Role.ORGANIZATION,
+}
+
+ACTIVE_RESPONSE_STATUSES = (TaskResponse.Status.PENDING, TaskResponse.Status.CHOSEN)
+
+
+def read_money(raw):
+    text = str(raw or '').strip().replace(' ', '').replace(',', '.')
+    if not text:
+        return None
+    try:
+        value = Decimal(text)
+    except InvalidOperation:
+        return None
+    if value <= 0 or value >= Decimal('10000000000'):
+        return None
+    return value.quantize(Decimal('0.01'))
+
+
+def clipped(raw, limit):
+    return str(raw or '').strip()[:limit]
+
+
+def collect_uploads(request, key, required, limit=8):
+    files = [
+        upload
+        for upload in request.FILES.getlist(key)
+        if getattr(upload, 'name', '') and getattr(upload, 'size', 0)
+    ]
+    if required and not files:
+        return None, 'Добавьте хотя бы одну фотографию.'
+    if len(files) > limit:
+        return None, 'Слишком много фотографий.'
+    for upload in files:
+        problem = image_problem(upload)
+        if problem:
+            return None, 'Нужны фотографии.' if problem == 'missing' else problem
+    return files, ''
+
+
+def category_filter(name):
+    item = CatalogFilter.objects.filter(kind=CatalogFilter.Kind.CATEGORY, name=name).first()
+    if item is None:
+        item = CatalogFilter.objects.create(kind=CatalogFilter.Kind.CATEGORY, name=name)
+    return item
+
+
+def product_type_for(category):
+    sphere = CATEGORY_SPHERE[category]
+    item = ProductType.objects.filter(sphere=sphere).first()
+    if item is None:
+        item = ProductType.objects.create(sphere=sphere)
+    return item
+
+
+def budget_label(task):
+    prefix = 'до ' if task.budget_kind == Task.BudgetKind.UP_TO else ''
+    return f'{prefix}{price_label(task.budget)}'
+
+
+def response_images(request, item):
+    return [
+        request.build_absolute_uri(photo.image.url)
+        for photo in item.images.all()
+        if photo.image
+    ]
+
+
+def response_payload(request, item):
+    return {
+        'id': item.id,
+        'task_id': item.task_id,
+        'task_title': item.task.title,
+        'price': str(item.price),
+        'deadline': item.deadline,
+        'message': item.message,
+        'status': item.status,
+        'status_label': item.get_status_display(),
+        'artist_id': item.artist_id,
+        'artist_name': person_name(item.artist),
+        'images': response_images(request, item),
+        'created_at': item.created_at.isoformat(),
+    }
+
+
+def task_images(request, task):
+    return [
+        request.build_absolute_uri(photo.image.url)
+        for photo in task.images.all()
+        if photo.image
+    ]
+
+
+def tasks_queryset():
+    visible = Q(responses__status=TaskResponse.Status.PENDING) | Q(responses__status=TaskResponse.Status.CHOSEN)
+    return (
+        Task.objects.select_related('customer', 'assignee')
+        .prefetch_related('images')
+        .annotate(responses_count=Count('responses', filter=visible))
+        .order_by('-created_at', '-id')
+    )
+
+
+def task_payload(request, task, user=None):
+    data = {
+        'id': task.id,
+        'title': task.title,
+        'description': task.description,
+        'category': task.category,
+        'budget': str(task.budget),
+        'budget_kind': task.budget_kind,
+        'budget_label': budget_label(task),
+        'deadline': task.deadline,
+        'status': task.status,
+        'status_label': task.get_status_display(),
+        'customer_id': task.customer_id,
+        'customer_name': person_name(task.customer),
+        'assignee_id': task.assignee_id,
+        'assignee_name': person_name(task.assignee) if task.assignee_id else '',
+        'images': task_images(request, task),
+        'responses_count': task.responses_count if hasattr(task, 'responses_count') else task.responses.exclude(status=TaskResponse.Status.REJECTED).count(),
+        'created_at': task.created_at.isoformat(),
+        'mine': bool(user and user.id == task.customer_id),
+    }
+    if data['mine']:
+        replies = (
+            task.responses.exclude(status=TaskResponse.Status.REJECTED)
+            .select_related('artist', 'task')
+            .prefetch_related('images')
+        )
+        data['responses'] = [response_payload(request, item) for item in replies]
+    elif user is not None:
+        own = (
+            task.responses.filter(artist=user)
+            .select_related('artist', 'task')
+            .prefetch_related('images')
+            .first()
+        )
+        if own is not None:
+            data['my_response'] = response_payload(request, own)
+    return data
+
+
+def notify(user, text, href):
+    Notice.objects.create(user=user, text=text[:300], href=href[:200])
+
+
+def consume_notices(user):
+    notices = list(user.notices.all()[:20])
+    payload = [
+        {
+            'id': item.id,
+            'text': item.text,
+            'href': item.href,
+            'read': item.read,
+            'created_at': item.created_at.isoformat(),
+        }
+        for item in notices
+    ]
+    unread = [item.id for item in notices if not item.read]
+    if unread:
+        Notice.objects.filter(pk__in=unread).update(read=True)
+    return payload
+
+
+def account_responses(request, user):
+    replies = (
+        user.task_responses.filter(status__in=ACTIVE_RESPONSE_STATUSES)
+        .select_related('artist', 'task')
+        .prefetch_related('images')
+        .order_by('-created_at', '-id')
+    )
+    return [response_payload(request, item) for item in replies]
+
+
+def account_tasks(request, user):
+    tasks = tasks_queryset().filter(customer=user)
+    return [task_payload(request, task, user) for task in tasks]
+
+
+def require_user(request):
+    user = read_user(request)
+    if user is None:
+        return None, Response({'detail': 'Войдите в учётную запись.'}, status=401)
+    return user, None
+
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def create_product(request):
+    user, error = require_user(request)
+    if error is not None:
+        return error
+    if user.role not in SELLER_ROLES:
+        return Response({'detail': 'Товары выкладывают художники.'}, status=403)
+    title = clipped(request.data.get('title'), 300).strip()
+    description = clipped(request.data.get('description'), 8000).strip()
+    category = str(request.data.get('category') or '').strip()
+    price = read_money(request.data.get('price'))
+    if not title:
+        return Response({'detail': 'Укажите название.'}, status=400)
+    if not description:
+        return Response({'detail': 'Добавьте описание.'}, status=400)
+    if category not in WORK_CATEGORIES:
+        return Response({'detail': 'Выберите категорию.'}, status=400)
+    if price is None:
+        return Response({'detail': 'Укажите цену.'}, status=400)
+    photos, photo_problem = collect_uploads(request, 'photos', required=True)
+    if photo_problem:
+        return Response({'detail': photo_problem}, status=400)
+    with transaction.atomic():
+        product = Product.objects.create(
+            seller=user,
+            product_type=product_type_for(category),
+            title=title,
+            description=description,
+            price=price,
+            quantity=1,
+            status=Product.Status.PUBLISHED,
+        )
+        product.filters.add(category_filter(category))
+        for order, photo in enumerate(photos):
+            ProductImage.objects.create(
+                product=product,
+                image=photo,
+                is_main=order == 0,
+                sort_order=order,
+            )
+    product = (
+        Product.objects.select_related('seller', 'product_type')
+        .prefetch_related('images', 'reviews__author', 'filters')
+        .get(pk=product.pk)
+    )
+    return Response(product_payload(request, product), status=201)
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def tasks(request):
+    if request.method == 'GET':
+        status = str(request.query_params.get('status') or '').strip()
+        queryset = tasks_queryset()
+        allowed = {item.value for item in Task.Status}
+        if status:
+            if status not in allowed:
+                return Response({'detail': 'Неизвестный статус.'}, status=400)
+            queryset = queryset.filter(status=status)
+        user = read_user(request)
+        return Response([task_payload(request, task, user) for task in queryset])
+    user, error = require_user(request)
+    if error is not None:
+        return error
+    if user.role != User.Role.CUSTOMER:
+        return Response({'detail': 'Задачи создают заказчики.'}, status=403)
+    title = clipped(request.data.get('title'), 300).strip()
+    description = clipped(request.data.get('description'), 8000).strip()
+    category = str(request.data.get('category') or '').strip()
+    deadline = clipped(request.data.get('deadline'), 100).strip()
+    budget = read_money(request.data.get('budget'))
+    budget_kind = str(request.data.get('budget_kind') or Task.BudgetKind.FIXED).strip()
+    if not title:
+        return Response({'detail': 'Укажите название.'}, status=400)
+    if not description:
+        return Response({'detail': 'Опишите задачу.'}, status=400)
+    if category not in WORK_CATEGORIES:
+        return Response({'detail': 'Выберите категорию.'}, status=400)
+    if not deadline:
+        return Response({'detail': 'Укажите сроки.'}, status=400)
+    if budget is None:
+        return Response({'detail': 'Укажите бюджет.'}, status=400)
+    if budget_kind not in {Task.BudgetKind.FIXED, Task.BudgetKind.UP_TO}:
+        return Response({'detail': 'Выберите тип бюджета.'}, status=400)
+    photos, photo_problem = collect_uploads(request, 'photos', required=False)
+    if photo_problem:
+        return Response({'detail': photo_problem}, status=400)
+    with transaction.atomic():
+        task = Task.objects.create(
+            customer=user,
+            title=title,
+            description=description,
+            category=category,
+            budget=budget,
+            budget_kind=budget_kind,
+            deadline=deadline,
+        )
+        for order, photo in enumerate(photos):
+            TaskImage.objects.create(task=task, image=photo, sort_order=order)
+    task = tasks_queryset().get(pk=task.pk)
+    return Response(task_payload(request, task, user), status=201)
+
+
+@api_view(['GET'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def task_detail(request, task_id):
+    task = get_object_or_404(tasks_queryset(), pk=task_id)
+    return Response(task_payload(request, task, read_user(request)))
+
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def task_respond(request, task_id):
+    user, error = require_user(request)
+    if error is not None:
+        return error
+    if user.role not in SELLER_ROLES:
+        return Response({'detail': 'Откликаться могут художники.'}, status=403)
+    price = read_money(request.data.get('price'))
+    deadline = clipped(request.data.get('deadline'), 100).strip()
+    message = clipped(request.data.get('message'), 4000).strip()
+    if price is None:
+        return Response({'detail': 'Укажите цену.'}, status=400)
+    if not deadline:
+        return Response({'detail': 'Укажите сроки.'}, status=400)
+    if not message:
+        return Response({'detail': 'Напишите сообщение.'}, status=400)
+    photos, photo_problem = collect_uploads(request, 'examples', required=False, limit=6)
+    if photo_problem:
+        return Response({'detail': photo_problem}, status=400)
+    with transaction.atomic():
+        task = Task.objects.select_for_update().filter(pk=task_id).first()
+        if task is None:
+            return Response({'detail': 'Задача не найдена.'}, status=404)
+        if task.status != Task.Status.OPEN:
+            return Response({'detail': 'Задача уже не принимает отклики.'}, status=400)
+        if TaskResponse.objects.filter(task=task, artist=user).exists():
+            return Response({'detail': 'Вы уже откликнулись на эту задачу.'}, status=400)
+        item = TaskResponse.objects.create(
+            task=task,
+            artist=user,
+            price=price,
+            deadline=deadline,
+            message=message,
+        )
+        for order, photo in enumerate(photos):
+            TaskResponseImage.objects.create(response=item, image=photo, sort_order=order)
+        notify(task.customer, f'Новый отклик на задачу «{task.title}»', f'/tasks/{task.id}')
+    item = TaskResponse.objects.select_related('artist', 'task').prefetch_related('images').get(pk=item.pk)
+    return Response(response_payload(request, item), status=201)
+
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def task_choose(request, task_id):
+    user, error = require_user(request)
+    if error is not None:
+        return error
+    try:
+        response_id = int(request.data.get('response_id'))
+    except (TypeError, ValueError):
+        return Response({'detail': 'Выберите отклик.'}, status=400)
+    with transaction.atomic():
+        task = Task.objects.select_for_update().filter(pk=task_id).first()
+        if task is None:
+            return Response({'detail': 'Задача не найдена.'}, status=404)
+        if task.customer_id != user.id:
+            return Response({'detail': 'Выбрать исполнителя может заказчик задачи.'}, status=403)
+        if task.status != Task.Status.OPEN:
+            return Response({'detail': 'Исполнитель уже выбран или задача закрыта.'}, status=400)
+        chosen = (
+            TaskResponse.objects.select_for_update()
+            .filter(pk=response_id, task=task, status=TaskResponse.Status.PENDING)
+            .select_related('artist')
+            .first()
+        )
+        if chosen is None:
+            return Response({'detail': 'Отклик не найден.'}, status=400)
+        task.status = Task.Status.IN_PROGRESS
+        task.assignee = chosen.artist
+        task.save()
+        chosen.status = TaskResponse.Status.CHOSEN
+        chosen.save(update_fields=['status'])
+        others = list(
+            TaskResponse.objects.filter(task=task, status=TaskResponse.Status.PENDING)
+            .exclude(pk=chosen.pk)
+            .select_related('artist')
+        )
+        TaskResponse.objects.filter(pk__in=[item.pk for item in others]).update(status=TaskResponse.Status.REJECTED)
+        notify(chosen.artist, f'Вас выбрали исполнителем задачи «{task.title}»', f'/tasks/{task.id}')
+        for item in others:
+            notify(item.artist, f'По задаче «{task.title}» выбран другой исполнитель', f'/tasks/{task.id}')
+    task = tasks_queryset().get(pk=task.pk)
+    return Response(task_payload(request, task, user))
+
+
+@api_view(['POST'])
+@authentication_classes([])
+@permission_classes([AllowAny])
+def task_close(request, task_id):
+    user, error = require_user(request)
+    if error is not None:
+        return error
+    with transaction.atomic():
+        task = Task.objects.select_for_update().filter(pk=task_id).select_related('assignee').first()
+        if task is None:
+            return Response({'detail': 'Задача не найдена.'}, status=404)
+        if task.customer_id != user.id:
+            return Response({'detail': 'Закрыть задачу может её заказчик.'}, status=403)
+        if task.status == Task.Status.CLOSED:
+            return Response({'detail': 'Задача уже закрыта.'}, status=400)
+        assignee = task.assignee
+        pending = list(
+            TaskResponse.objects.filter(task=task, status=TaskResponse.Status.PENDING).select_related('artist')
+        )
+        TaskResponse.objects.filter(pk__in=[item.pk for item in pending]).update(status=TaskResponse.Status.REJECTED)
+        task.status = Task.Status.CLOSED
+        task.save()
+        if assignee is not None:
+            notify(assignee, f'Заказчик закрыл задачу «{task.title}»', f'/tasks/{task.id}')
+        for item in pending:
+            if assignee is None or item.artist_id != assignee.id:
+                notify(item.artist, f'Задача «{task.title}» закрыта', f'/tasks/{task.id}')
+    task = tasks_queryset().get(pk=task.pk)
+    return Response(task_payload(request, task, user))

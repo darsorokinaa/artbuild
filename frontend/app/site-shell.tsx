@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Bodoni_Moda, Cormorant_Garamond, Manrope } from "next/font/google";
 import { AccountProvider } from "./account-provider";
+import { HeaderAccountLink } from "./header-account";
 import { DialogsButton } from "./messenger";
 
 const manrope = Manrope({
@@ -63,7 +64,8 @@ function SiteHeader() {
             </a>
           ))}
         </nav>
-        <nav className="ml-auto">
+        <nav className="ml-auto flex flex-wrap items-center gap-3">
+          <HeaderAccountLink />
           <a href={menu[2].href} className={`${menuClass} ${menu[2].tone}`}>
             {menu[2].label}
           </a>

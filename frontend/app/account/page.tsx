@@ -27,6 +27,32 @@ type CabinetProduct = {
   production_time?: string;
 };
 
+type CabinetNotice = {
+  id: number;
+  text: string;
+  href: string;
+  read: boolean;
+};
+
+type CabinetReply = {
+  id: number;
+  task_id: number;
+  task_title: string;
+  price: string;
+  deadline: string;
+  status_label: string;
+};
+
+type CabinetTask = {
+  id: number;
+  title: string;
+  status_label: string;
+  budget_label: string;
+  deadline: string;
+  responses_count: number;
+  assignee_name?: string;
+};
+
 type Cabinet = {
   user: {
     first_name: string;
@@ -41,6 +67,9 @@ type Cabinet = {
   dialogs: { id: number; with_name: string; last_text: string }[];
   portfolios?: CabinetWork[];
   products?: CabinetProduct[];
+  responses?: CabinetReply[];
+  tasks?: CabinetTask[];
+  notices?: CabinetNotice[];
 };
 
 function priceFor(price?: string) {
@@ -54,13 +83,21 @@ function priceFor(price?: string) {
   return `${digits} ₽`;
 }
 
+const actionClass =
+  "inline-flex border border-[#1A1A1A] bg-[#1A1A1A] px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em] text-white";
+
+const quietClass =
+  "inline-flex border border-[#1A1A1A] bg-white px-4 py-2.5 text-[11px] font-light uppercase tracking-[0.18em]";
+
 function MasterCabinet({
   portfolios,
   products,
+  responses,
   dialogs,
 }: {
   portfolios: CabinetWork[];
   products: CabinetProduct[];
+  responses: CabinetReply[];
   dialogs: { id: number; with_name: string; last_text: string }[];
 }) {
   const cover = portfolios.filter((work) => work.main);
@@ -98,7 +135,12 @@ function MasterCabinet({
         ) : null}
       </section>
       <section className="mt-12">
-        <h2 className={heading}>Изделия</h2>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 className={heading}>Изделия</h2>
+          <a href="/products/new" className={actionClass}>
+            Выложить товар
+          </a>
+        </div>
         {products.length === 0 ? <p className="mt-4 text-sm font-light leading-7">Изделий пока нет.</p> : null}
         <ul className="mt-4">
           {products.map((product) => {
@@ -119,6 +161,27 @@ function MasterCabinet({
               </li>
             );
           })}
+        </ul>
+      </section>
+      <section className="mt-12">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 className={heading}>Отклики</h2>
+          <a href="/tasks" className={quietClass}>
+            Лента задач
+          </a>
+        </div>
+        {responses.length === 0 ? <p className="mt-4 text-sm font-light leading-7">Активных откликов пока нет.</p> : null}
+        <ul className="mt-4 max-w-xl">
+          {responses.map((reply) => (
+            <li key={reply.id} className="border-t border-[#E6E6E6] py-4 text-sm font-light">
+              <a href={`/tasks/${reply.task_id}`} className="font-[family-name:var(--font-display)] text-2xl font-light">
+                {reply.task_title}
+              </a>
+              <span className="mt-2 block text-[#1A1A1A]/70">
+                {[priceFor(reply.price), reply.deadline, reply.status_label].filter(Boolean).join(" · ")}
+              </span>
+            </li>
+          ))}
         </ul>
       </section>
       <section className="mt-12">
@@ -154,6 +217,100 @@ function Photos({ images }: { images: Photo[] }) {
       ))}
     </ul>
   );
+}
+
+function Notices({ notices }: { notices: CabinetNotice[] }) {
+  if (notices.length === 0) {
+    return null;
+  }
+  return (
+    <section className="mt-12 max-w-xl">
+      <h2 className="font-[family-name:var(--font-display)] text-4xl font-light">Уведомления</h2>
+      <ul className="mt-4">
+        {notices.map((notice) => (
+          <li key={notice.id} className="border-t border-[#E6E6E6] py-3 text-sm font-light">
+            {notice.href ? (
+              <a href={notice.href} className={notice.read ? "text-[#1A1A1A]/55" : "text-[#1A1A1A]"}>
+                {notice.text}
+              </a>
+            ) : (
+              <span className={notice.read ? "text-[#1A1A1A]/55" : ""}>{notice.text}</span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function CustomerCabinet({
+  tasks,
+  dialogs,
+}: {
+  tasks: CabinetTask[];
+  dialogs: { id: number; with_name: string; last_text: string }[];
+}) {
+  return (
+    <div className="mt-12 max-w-xl">
+      <section>
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <h2 className="font-[family-name:var(--font-display)] text-4xl font-light">Задачи</h2>
+          <a href="/tasks/new" className={actionClass}>
+            Создать задачу
+          </a>
+        </div>
+        {tasks.length === 0 ? <p className="mt-4 text-sm font-light leading-7">Задач пока нет.</p> : null}
+        <ul className="mt-4">
+          {tasks.map((task) => (
+            <li key={task.id} className="border-t border-[#E6E6E6] py-4 text-sm font-light">
+              <div className="flex items-baseline justify-between gap-4">
+                <a href={`/tasks/${task.id}`} className="font-[family-name:var(--font-display)] text-2xl font-light">
+                  {task.title}
+                </a>
+                <span className="text-[11px] uppercase tracking-[0.16em] text-[#1A1A1A]/45">{task.status_label}</span>
+              </div>
+              <span className="mt-2 block text-[#1A1A1A]/70">
+                {[
+                  task.budget_label,
+                  task.deadline,
+                  task.assignee_name ? `исполнитель ${task.assignee_name}` : repliesLabel(task.responses_count),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </section>
+      <section className="mt-12">
+        <h2 className="font-[family-name:var(--font-display)] text-4xl font-light">Диалоги</h2>
+        {dialogs.length === 0 ? <p className="mt-4 text-sm font-light leading-7">Переписок пока нет.</p> : null}
+        <ul className="mt-4">
+          {dialogs.map((dialog) => (
+            <li key={dialog.id} className="border-t border-[#E6E6E6] py-3 text-sm font-light">
+              {dialog.with_name}
+              {dialog.last_text ? <span className="mt-1 block truncate text-[#1A1A1A]/55">{dialog.last_text}</span> : null}
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function repliesLabel(count: number) {
+  const value = Math.abs(count) % 100;
+  const last = value % 10;
+  if (value > 10 && value < 20) {
+    return `${count} откликов`;
+  }
+  if (last === 1) {
+    return `${count} отклик`;
+  }
+  if (last > 1 && last < 5) {
+    return `${count} отклика`;
+  }
+  return `${count} откликов`;
 }
 
 export default function AccountPage() {
@@ -218,26 +375,16 @@ function CabinetBody() {
               </div>
             ) : null}
           </dl>
+          <Notices notices={cabinet.notices ?? []} />
           {cabinet.kind === "master" ? (
-            <MasterCabinet portfolios={cabinet.portfolios ?? []} products={cabinet.products ?? []} dialogs={cabinet.dialogs} />
+            <MasterCabinet
+              portfolios={cabinet.portfolios ?? []}
+              products={cabinet.products ?? []}
+              responses={cabinet.responses ?? []}
+              dialogs={cabinet.dialogs}
+            />
           ) : (
-            <section className="mt-12 max-w-xl">
-              <h2 className="font-[family-name:var(--font-display)] text-4xl font-light">Диалоги</h2>
-              {cabinet.dialogs.length === 0 ? (
-                <p className="mt-4 text-sm font-light leading-7">Переписок пока нет.</p>
-              ) : (
-                <ul className="mt-4">
-                  {cabinet.dialogs.map((dialog) => (
-                    <li key={dialog.id} className="border-t border-[#E6E6E6] py-3 text-sm font-light">
-                      {dialog.with_name}
-                      {dialog.last_text ? (
-                        <span className="mt-1 block truncate text-[#1A1A1A]/55">{dialog.last_text}</span>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
+            <CustomerCabinet tasks={cabinet.tasks ?? []} dialogs={cabinet.dialogs} />
           )}
           <button
             type="button"

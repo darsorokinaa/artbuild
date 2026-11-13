@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { getImageUrl } from "./media-url";
 import { ProductDialog, type ProductCardData } from "./product-card";
+import { workCategories } from "./work-categories";
 
 export type CatalogFilters = {
   category: string[];
@@ -51,7 +52,7 @@ export type CatalogProduct = {
   reviews?: { id: number; author: string; rating: number; text: string }[];
 };
 
-const categories = ["Скульптура", "Живопись", "Декор", "Мебель", "Текстиль"] as const;
+const categories = workCategories;
 
 const facets = [
   { id: "color", label: "Цвет" },
@@ -139,12 +140,17 @@ export function ProductsCatalogList({
           naidista
         </h1>
         <p className="mx-auto mt-4 max-w-md text-sm leading-6 text-[#767676]">naidista — заказывай и продавай искусство</p>
-        <a
-          href="/register?kind=customer"
-          className={`${boxButton} mt-6 border-[#1A1A1A] bg-white text-[#1A1A1A] hover:bg-[#F4F4F4] md:absolute md:right-8 md:top-8 md:mt-0`}
-        >
-          Заказать работу
-        </a>
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-3 md:absolute md:right-8 md:top-8 md:mt-0">
+          <a href="/tasks" className={`${boxButton} border-[#E6E6E6] bg-white text-[#1A1A1A] hover:border-[#1A1A1A]`}>
+            Задачи
+          </a>
+          <a
+            href="/tasks/new"
+            className={`${boxButton} border-[#1A1A1A] bg-white text-[#1A1A1A] hover:bg-[#F4F4F4]`}
+          >
+            Заказать работу
+          </a>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-6 md:grid-cols-[13rem_minmax(0,1fr)] md:items-start">
