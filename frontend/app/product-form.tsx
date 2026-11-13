@@ -13,7 +13,13 @@ const buttonClass =
 
 const sellerRoles = new Set(["master", "designer", "architect", "organization"]);
 
-export function ProductForm() {
+export function ProductForm({
+  embedded = false,
+  onCreated,
+}: {
+  embedded?: boolean;
+  onCreated?: () => void;
+}) {
   const router = useRouter();
   const { user, token, ready } = useAccount();
   const [error, setError] = useState("");
@@ -41,6 +47,10 @@ export function ProductForm() {
         setError(data.detail || "Не удалось выложить товар.");
         return;
       }
+      if (onCreated) {
+        onCreated();
+        return;
+      }
       router.push("/products");
     } catch {
       setError("Публикация временно недоступна.");
@@ -49,12 +59,8 @@ export function ProductForm() {
     }
   }
 
-  return (
-    <section className="px-9 py-12 md:px-[25.2rem] md:py-16 lg:px-[33.6rem]">
-      <p className="text-[11px] font-light uppercase tracking-[0.32em] text-[#1A1A1A]/55">Каталог</p>
-      <h1 className="mt-6 font-[family-name:var(--font-display)] text-6xl font-light leading-none md:text-7xl">
-        Новый товар
-      </h1>
+  const form = (
+    <>
       {!ready ? null : !user ? (
         <p className="mt-8 text-sm font-light leading-7">
           Войдите как художник, чтобы выложить работу.{" "}
@@ -71,7 +77,7 @@ export function ProductForm() {
           .
         </p>
       ) : (
-        <form onSubmit={submit} className="mt-10 grid max-w-xl gap-6">
+        <form onSubmit={submit} className="grid max-w-xl gap-6">
           <label className="block">
             <span className="text-[10px] font-light uppercase tracking-[0.18em] text-[#1A1A1A]/50">Фотографии</span>
             <input name="photos" type="file" accept="image/*" multiple required className="mt-3 block w-full text-sm font-light" />
@@ -103,16 +109,32 @@ export function ProductForm() {
             </select>
           </label>
           {error ? <p className="text-sm font-light leading-7">{error}</p> : null}
-          <div className="flex items-center justify-between gap-4">
-            <a href="/account" className="text-[11px] font-light uppercase tracking-[0.18em] text-[#1A1A1A]/55">
-              В кабинет
-            </a>
+          <div className={`flex items-center gap-4 ${embedded ? "justify-end" : "justify-between"}`}>
+            {embedded ? null : (
+              <a href="/account" className="text-[11px] font-light uppercase tracking-[0.18em] text-[#1A1A1A]/55">
+                В кабинет
+              </a>
+            )}
             <button type="submit" disabled={pending} className={buttonClass}>
               Опубликовать
             </button>
           </div>
         </form>
       )}
+    </>
+  );
+
+  if (embedded) {
+    return form;
+  }
+
+  return (
+    <section className="px-9 py-12 md:px-[25.2rem] md:py-16 lg:px-[33.6rem]">
+      <p className="text-[11px] font-light uppercase tracking-[0.32em] text-[#1A1A1A]/55">Каталог</p>
+      <h1 className="mt-6 font-[family-name:var(--font-display)] text-6xl font-light leading-none md:text-7xl">
+        Новый товар
+      </h1>
+      <div className="mt-10">{form}</div>
     </section>
   );
 }

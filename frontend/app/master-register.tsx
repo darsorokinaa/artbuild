@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAccount, type SessionUser } from "./account-provider";
 
@@ -22,35 +22,7 @@ const steps = [
 type Step = 1 | 2 | 3;
 type Kind = "master" | "customer";
 
-type PhotoDraft = {
-  key: string;
-  file: File | null;
-  description: string;
-};
-
-type PortfolioDraft = {
-  key: string;
-  title: string;
-  description: string;
-  photos: PhotoDraft[];
-};
-
 type FieldName = "firstName" | "lastName" | "email" | "phone" | "password" | "repeat" | "description";
-
-let draftCount = 0;
-
-function nextDraftKey(prefix: string) {
-  draftCount += 1;
-  return `${prefix}-${draftCount}`;
-}
-
-function emptyPhoto(): PhotoDraft {
-  return { key: nextDraftKey("photo"), file: null, description: "" };
-}
-
-function emptyPortfolio(): PortfolioDraft {
-  return { key: nextDraftKey("portfolio"), title: "", description: "", photos: [emptyPhoto()] };
-}
 
 function inputClass(invalid: boolean) {
   return `${fieldClass} ${invalid ? "border-[#333333]" : "border-[#D9D9D9]"}`;
@@ -101,36 +73,6 @@ function Progress({ step, onStep }: { step: Step; onStep: (step: Step) => void }
         );
       })}
     </ol>
-  );
-}
-
-function PhotoSlot({ file, onChange }: { file: File | null; onChange: (file: File | null) => void }) {
-  const [preview, setPreview] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!file) {
-      setPreview(null);
-      return;
-    }
-    const url = URL.createObjectURL(file);
-    setPreview(url);
-    return () => URL.revokeObjectURL(url);
-  }, [file]);
-
-  return (
-    <label className="relative flex h-28 w-28 shrink-0 cursor-pointer items-center justify-center border border-[#D9D9D9] bg-white">
-      {preview ? (
-        <img src={preview} alt="" className="h-full w-full object-cover" />
-      ) : (
-        <span className="px-2 text-center text-[13px] text-[#767676]">Выбрать фото</span>
-      )}
-      <input
-        type="file"
-        accept="image/*"
-        className="sr-only"
-        onChange={(event) => onChange(event.target.files?.[0] ?? null)}
-      />
-    </label>
   );
 }
 
@@ -199,7 +141,6 @@ export function MasterRegister({
   const [repeat, setRepeat] = useState("");
   const [specialty, setSpecialty] = useState<(typeof specialties)[number][0]>(initialSpecialty);
   const [description, setDescription] = useState("");
-  const [portfolios, setPortfolios] = useState<PortfolioDraft[]>([]);
 
   function clearField(name: FieldName) {
     setFieldErrors((current) => {
@@ -274,61 +215,6 @@ export function MasterRegister({
     setStep(next);
   }
 
-  function updatePortfolio(key: string, patch: Partial<PortfolioDraft>) {
-    setPortfolios((current) => current.map((item) => (item.key === key ? { ...item, ...patch } : item)));
-  }
-
-  function updatePhoto(portfolioKey: string, photoKey: string, patch: Partial<PhotoDraft>) {
-    setPortfolios((current) =>
-      current.map((item) => {
-        if (item.key !== portfolioKey) {
-          return item;
-        }
-        return {
-          ...item,
-          photos: item.photos.map((photo) => (photo.key === photoKey ? { ...photo, ...patch } : photo)),
-        };
-      }),
-    );
-  }
-
-  function movePhoto(portfolioKey: string, photoKey: string, direction: -1 | 1) {
-    setPortfolios((current) =>
-      current.map((item) => {
-        if (item.key !== portfolioKey) {
-          return item;
-        }
-        const index = item.photos.findIndex((photo) => photo.key === photoKey);
-        const next = index + direction;
-        if (index < 0 || next < 0 || next >= item.photos.length) {
-          return item;
-        }
-        const photos = [...item.photos];
-        const [photo] = photos.splice(index, 1);
-        photos.splice(next, 0, photo);
-        return { ...item, photos };
-      }),
-    );
-  }
-
-  function portfoliosProblem() {
-    if (portfolios.length === 0) {
-      return "Добавьте портфолио.";
-    }
-    for (const portfolio of portfolios) {
-      if (!portfolio.title.trim() || !portfolio.description.trim()) {
-        return "Укажите название и описание работы.";
-      }
-      if (portfolio.photos.length === 0 || portfolio.photos.some((photo) => !photo.file)) {
-        return "Добавьте фотографию портфолио.";
-      }
-      if (portfolio.photos.some((photo) => !photo.description.trim())) {
-        return "Добавьте описание к каждой фотографии.";
-      }
-    }
-    return "";
-  }
-
   async function submit() {
     if (sending.current) {
       return;
@@ -341,32 +227,24 @@ export function MasterRegister({
       setStep(2);
       return;
     }
-    if (kind === "master") {
-      const problem = portfoliosProblem();
-      if (problem) {
-        setFormError(problem);
-        return;
-      }
-    }
     sending.current = true;
     setPending(true);
     setFormError("");
     try {
-      const response =
-        kind === "master" ? await fetch("/api/register", { method: "POST", body: masterBody() }) : await fetch("/api/register", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            kind: "customer",
-            first_name: firstName.trim(),
-            last_name: lastName.trim(),
-            email: email.trim(),
-            phone: phone.trim(),
-            password,
-            specialty: "",
-            description: "",
-          }),
-        });
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          kind,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          password,
+          specialty: kind === "master" ? specialty : "",
+          description: kind === "master" ? description.trim() : "",
+        }),
+      });
       const data = await response.json();
       if (!response.ok) {
         const detail = data.detail || "Не удалось зарегистрироваться.";
@@ -398,37 +276,8 @@ export function MasterRegister({
     }
   }
 
-  function masterBody() {
-    const body = new FormData();
-    body.set("kind", "master");
-    body.set("first_name", firstName.trim());
-    body.set("last_name", lastName.trim());
-    body.set("email", email.trim());
-    body.set("phone", phone.trim());
-    body.set("password", password);
-    body.set("specialty", specialty);
-    body.set("description", description.trim());
-    body.set(
-      "portfolios",
-      JSON.stringify(
-        portfolios.map((portfolio) => ({
-          title: portfolio.title.trim(),
-          description: portfolio.description.trim(),
-          photos: portfolio.photos.map((photo) => ({ description: photo.description.trim() })),
-        })),
-      ),
-    );
-    portfolios.forEach((portfolio, index) => {
-      portfolio.photos.forEach((photo, slot) => {
-        if (photo.file) {
-          body.append(`portfolio_${index}_${slot}`, photo.file);
-        }
-      });
-    });
-    return body;
-  }
-
   const wide = step > 1;
+  const specialtyLabel = specialties.find(([value]) => value === specialty)?.[1] ?? "";
 
   return (
     <div className={wide ? "" : "lg:grid lg:grid-cols-[minmax(0,44rem)_minmax(0,1fr)]"}>
@@ -632,126 +481,34 @@ export function MasterRegister({
 
       {step === 3 ? (
         <div className="mt-10">
-          {kind === "master" ? (
+          <dl className="grid gap-5 text-sm">
             <div>
-              <p className="max-w-md text-sm leading-6 text-[#767676]">
-                Портфолио сохраняется вместе с аккаунтом. Первое фото становится основным.
-              </p>
-              <div className="mt-8 grid gap-10">
-                {portfolios.map((portfolio, index) => (
-                  <section key={portfolio.key} className="border-t border-[#D9D9D9] pt-6">
-                    <div className="flex items-baseline justify-between gap-4">
-                      <p className="text-[13px] text-[#767676]">Портфолио {String(index + 1).padStart(2, "0")}</p>
-                      <button
-                        type="button"
-                        onClick={() => setPortfolios((current) => current.filter((item) => item.key !== portfolio.key))}
-                        className="text-[13px] text-[#767676] underline underline-offset-4 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#242424]"
-                      >
-                        Удалить
-                      </button>
-                    </div>
-                    <div className="mt-5 grid gap-6">
-                      <Field label="Название">
-                        <input
-                          value={portfolio.title}
-                          onChange={(event) => updatePortfolio(portfolio.key, { title: event.target.value })}
-                          className={inputClass(false)}
-                        />
-                      </Field>
-                      <Field label="Описание работы">
-                        <textarea
-                          value={portfolio.description}
-                          onChange={(event) => updatePortfolio(portfolio.key, { description: event.target.value })}
-                          rows={3}
-                          className={`${inputClass(false)} min-h-24 resize-y`}
-                        />
-                      </Field>
-                    </div>
-                    <div className="mt-6 grid gap-4">
-                      {portfolio.photos.map((photo, photoIndex) => (
-                        <div key={photo.key} className="grid gap-4 border border-[#D9D9D9] bg-white p-4 sm:grid-cols-[7rem_minmax(0,1fr)]">
-                          <PhotoSlot
-                            file={photo.file}
-                            onChange={(file) => updatePhoto(portfolio.key, photo.key, { file })}
-                          />
-                          <div className="min-w-0">
-                            {photoIndex === 0 ? <p className="text-[13px] text-[#242424]">Основное</p> : null}
-                            <Field label="Описание картинки">
-                              <input
-                                value={photo.description}
-                                onChange={(event) => updatePhoto(portfolio.key, photo.key, { description: event.target.value })}
-                                className={inputClass(false)}
-                              />
-                            </Field>
-                            <div className="mt-3 flex flex-wrap gap-4">
-                              <button
-                                type="button"
-                                disabled={photoIndex === 0}
-                                onClick={() => movePhoto(portfolio.key, photo.key, -1)}
-                                className="text-[13px] text-[#242424] underline underline-offset-4 disabled:text-[#D9D9D9] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#242424]"
-                              >
-                                Выше
-                              </button>
-                              <button
-                                type="button"
-                                disabled={photoIndex === portfolio.photos.length - 1}
-                                onClick={() => movePhoto(portfolio.key, photo.key, 1)}
-                                className="text-[13px] text-[#242424] underline underline-offset-4 disabled:text-[#D9D9D9] focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#242424]"
-                              >
-                                Ниже
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  updatePortfolio(portfolio.key, {
-                                    photos: portfolio.photos.filter((item) => item.key !== photo.key),
-                                  })
-                                }
-                                className="text-[13px] text-[#767676] underline underline-offset-4 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#242424]"
-                              >
-                                Удалить фото
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => updatePortfolio(portfolio.key, { photos: [...portfolio.photos, emptyPhoto()] })}
-                      className="mt-4 text-sm text-[#242424] underline underline-offset-4 focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#242424]"
-                    >
-                      Добавить фото
-                    </button>
-                  </section>
-                ))}
-              </div>
-              <button
-                type="button"
-                onClick={() => setPortfolios((current) => [...current, emptyPortfolio()])}
-                className="mt-8 inline-flex min-h-11 items-center border border-[#242424] bg-white px-5 text-sm text-[#242424] hover:bg-[#242424] hover:text-white focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-4 focus-visible:outline-[#242424]"
-              >
-                Добавить портфолио
-              </button>
+              <dt className="text-[13px] text-[#767676]">Имя</dt>
+              <dd className="mt-1 text-[#242424]">
+                {firstName} {lastName}
+              </dd>
             </div>
-          ) : (
-            <dl className="grid gap-5 text-sm">
-              <div>
-                <dt className="text-[13px] text-[#767676]">Имя</dt>
-                <dd className="mt-1 text-[#242424]">
-                  {firstName} {lastName}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-[13px] text-[#767676]">Электронная почта</dt>
-                <dd className="mt-1 break-all text-[#242424]">{email}</dd>
-              </div>
-              <div>
-                <dt className="text-[13px] text-[#767676]">Телефон</dt>
-                <dd className="mt-1 text-[#242424]">{phone}</dd>
-              </div>
-            </dl>
-          )}
+            <div>
+              <dt className="text-[13px] text-[#767676]">Электронная почта</dt>
+              <dd className="mt-1 break-all text-[#242424]">{email}</dd>
+            </div>
+            <div>
+              <dt className="text-[13px] text-[#767676]">Телефон</dt>
+              <dd className="mt-1 text-[#242424]">{phone}</dd>
+            </div>
+            {kind === "master" ? (
+              <>
+                <div>
+                  <dt className="text-[13px] text-[#767676]">Специализация</dt>
+                  <dd className="mt-1 text-[#242424]">{specialtyLabel}</dd>
+                </div>
+                <div>
+                  <dt className="text-[13px] text-[#767676]">О себе</dt>
+                  <dd className="mt-1 max-w-xl text-[#242424]">{description}</dd>
+                </div>
+              </>
+            ) : null}
+          </dl>
           {formError ? <p className="mt-6 text-sm leading-6 text-[#333333]">{formError}</p> : null}
           <div className="mt-10 flex items-center justify-between gap-4">
             <button

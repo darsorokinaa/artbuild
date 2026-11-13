@@ -25,7 +25,13 @@ SECRET_KEY = 'django-insecure-x8ro5@)fl^ob-!2czjdnd=ak*#q#z_^2$sp0h8*+*qvh&k!u24
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['naidista.ru', 'www.naidista.ru']
+ALLOWED_HOSTS = [
+    'naidista.ru',
+    'www.naidista.ru',
+    '139.100.218.161',
+    'localhost',
+    '127.0.0.1',
+]
 
 
 # Application definition

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { SiteShell } from "../site-shell";
 import { useAccount } from "../account-provider";
 import { getImageUrl } from "../media-url";
+import { ProductForm } from "../product-form";
 
 type Photo = { src: string; description?: string };
 
@@ -94,11 +95,13 @@ function MasterCabinet({
   products,
   responses,
   dialogs,
+  onProductCreated,
 }: {
   portfolios: CabinetWork[];
   products: CabinetProduct[];
   responses: CabinetReply[];
   dialogs: { id: number; with_name: string; last_text: string }[];
+  onProductCreated: () => void;
 }) {
   const cover = portfolios.filter((work) => work.main);
   const works = portfolios.filter((work) => !work.main);
@@ -136,12 +139,18 @@ function MasterCabinet({
       </section>
       <section className="mt-12">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className={heading}>Изделия</h2>
-          <a href="/products/new" className={actionClass}>
-            Выложить товар
-          </a>
+          <h2 className={heading}>{products.length === 0 ? "Добавьте своё первое изделие" : "Изделия"}</h2>
+          {products.length === 0 ? null : (
+            <a href="/products/new" className={actionClass}>
+              Выложить товар
+            </a>
+          )}
         </div>
-        {products.length === 0 ? <p className="mt-4 text-sm font-light leading-7">Изделий пока нет.</p> : null}
+        {products.length === 0 ? (
+          <div className="mt-8">
+            <ProductForm embedded onCreated={onProductCreated} />
+          </div>
+        ) : (
         <ul className="mt-4">
           {products.map((product) => {
             const price = priceFor(product.price);
@@ -162,6 +171,7 @@ function MasterCabinet({
             );
           })}
         </ul>
+        )}
       </section>
       <section className="mt-12">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -325,6 +335,7 @@ function CabinetBody() {
   const { token, ready, logout } = useAccount();
   const [cabinet, setCabinet] = useState<Cabinet | null>(null);
   const [error, setError] = useState("");
+  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     if (!ready) {
@@ -345,7 +356,7 @@ function CabinetBody() {
       })
       .then((data: Cabinet) => setCabinet(data))
       .catch(() => setError("Кабинет временно недоступен."));
-  }, [ready, token]);
+  }, [ready, token, revision]);
 
   const user = cabinet?.user;
 
@@ -382,6 +393,7 @@ function CabinetBody() {
               products={cabinet.products ?? []}
               responses={cabinet.responses ?? []}
               dialogs={cabinet.dialogs}
+              onProductCreated={() => setRevision((current) => current + 1)}
             />
           ) : (
             <CustomerCabinet tasks={cabinet.tasks ?? []} dialogs={cabinet.dialogs} />

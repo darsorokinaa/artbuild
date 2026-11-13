@@ -704,9 +704,11 @@ def register(request):
             return Response({'detail': 'Выберите специальность.'}, status=400)
         if not fields['description']:
             return Response({'detail': 'Напишите краткое резюме.'}, status=400)
-        materials, problem = master_materials(request)
-        if problem:
-            return Response({'detail': problem}, status=400)
+        raw_portfolios = str(request.data.get('portfolios') or '').strip()
+        if raw_portfolios and raw_portfolios != '[]':
+            materials, problem = master_materials(request)
+            if problem:
+                return Response({'detail': problem}, status=400)
         role = fields['specialty']
         description = fields['description']
     else:
