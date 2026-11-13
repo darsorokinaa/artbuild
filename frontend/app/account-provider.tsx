@@ -22,7 +22,20 @@ type AccountContextValue = {
 };
 
 const storageKey = "artbuild-token";
+const userKey = "artbuild-user";
 const AccountContext = createContext<AccountContextValue | null>(null);
+
+function readStoredUser() {
+  const raw = window.localStorage.getItem(userKey);
+  if (!raw) {
+    return null;
+  }
+  try {
+    return JSON.parse(raw) as SessionUser;
+  } catch {
+    return null;
+  }
+}
 
 export function AccountProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -31,6 +44,10 @@ export function AccountProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = window.localStorage.getItem(storageKey) ?? "";
+    const storedUser = readStoredUser();
+    if (storedUser) {
+      setUser(storedUser);
+    }
     if (!saved) {
       setReady(true);
       return;
@@ -38,27 +55,38 @@ export function AccountProvider({ children }: { children: ReactNode }) {
     setToken(saved);
     fetch("/api/account", { headers: { Authorization: `Bearer ${saved}` } })
       .then(async (response) => {
+        if (response.status === 401) {
+          window.localStorage.removeItem(storageKey);
+          window.localStorage.removeItem(userKey);
+          setToken("");
+          setUser(null);
+          return null;
+        }
         if (!response.ok) {
-          throw new Error("no");
+          return null;
         }
         return response.json();
       })
-      .then((data: { user: SessionUser }) => setUser(data.user))
-      .catch(() => {
-        window.localStorage.removeItem(storageKey);
-        setToken("");
+      .then((data: { user: SessionUser } | null) => {
+        if (data?.user) {
+          window.localStorage.setItem(userKey, JSON.stringify(data.user));
+          setUser(data.user);
+        }
       })
+      .catch(() => undefined)
       .finally(() => setReady(true));
   }, []);
 
   function setSession(nextToken: string, nextUser: SessionUser) {
     window.localStorage.setItem(storageKey, nextToken);
+    window.localStorage.setItem(userKey, JSON.stringify(nextUser));
     setToken(nextToken);
     setUser(nextUser);
   }
 
   function logout() {
     window.localStorage.removeItem(storageKey);
+    window.localStorage.removeItem(userKey);
     setToken("");
     setUser(null);
   }

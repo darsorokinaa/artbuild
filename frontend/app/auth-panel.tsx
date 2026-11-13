@@ -95,7 +95,7 @@ export function AuthPanel({
           return;
         }
         setSession(data.token, data.user as SessionUser);
-        router.push("/account");
+        window.location.assign("/account");
         return;
       }
       const password = String(form.get("password") || "");
@@ -124,7 +124,7 @@ export function AuthPanel({
         return;
       }
       setSession(data.token, data.user as SessionUser);
-      router.push("/account");
+      window.location.assign("/account");
     } catch {
       setError(mode === "login" ? "Вход временно недоступен." : "Регистрация временно недоступна.");
     } finally {

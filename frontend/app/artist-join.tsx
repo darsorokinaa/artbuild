@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { useAccount, type SessionUser } from "./account-provider";
 
 const focusRing =
@@ -208,7 +207,6 @@ function PhotoPreview({ file }: { file: File }) {
 }
 
 export function ArtistJoin() {
-  const router = useRouter();
   const { setSession } = useAccount();
   const sending = useRef(false);
   const [gate, setGate] = useState<Gate>("choose");
@@ -348,7 +346,7 @@ export function ArtistJoin() {
         return;
       }
       setSession(data.token, data.user as SessionUser);
-      router.push("/account");
+      window.location.assign("/account");
     } catch {
       setError("Вход временно недоступен.");
       sending.current = false;
@@ -401,7 +399,7 @@ export function ArtistJoin() {
         return;
       }
       setSession(data.token, data.user as SessionUser);
-      router.push("/account");
+      window.location.assign("/account");
     } catch {
       setError("Регистрация временно недоступна.");
       sending.current = false;

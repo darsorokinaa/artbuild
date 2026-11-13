@@ -3,6 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from django.core import signing
 from django.db import transaction
+from django.db.utils import OperationalError
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, Value, When
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
@@ -768,10 +769,19 @@ def account_home(request):
             {**product_payload(request, product), 'status': product.get_status_display()}
             for product in products
         ]
-        payload['responses'] = account_responses(request, user)
+        try:
+            payload['responses'] = account_responses(request, user)
+        except OperationalError:
+            payload['responses'] = []
     else:
-        payload['tasks'] = account_tasks(request, user)
-    payload['notices'] = consume_notices(user)
+        try:
+            payload['tasks'] = account_tasks(request, user)
+        except OperationalError:
+            payload['tasks'] = []
+    try:
+        payload['notices'] = consume_notices(user)
+    except OperationalError:
+        payload['notices'] = []
     return Response(payload)
 
 

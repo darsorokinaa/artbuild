@@ -332,7 +332,7 @@ export default function AccountPage() {
 }
 
 function CabinetBody() {
-  const { token, ready, logout } = useAccount();
+  const { user: sessionUser, token, ready, logout } = useAccount();
   const [cabinet, setCabinet] = useState<Cabinet | null>(null);
   const [error, setError] = useState("");
   const [revision, setRevision] = useState(0);
@@ -343,26 +343,35 @@ function CabinetBody() {
     }
     if (!token) {
       setCabinet(null);
-      setError("Войдите, чтобы открыть кабинет.");
+      setError("");
       return;
     }
     setError("");
     fetch("/api/account", { headers: { Authorization: `Bearer ${token}` } })
       .then(async (response) => {
+        if (response.status === 401) {
+          setError("Войдите, чтобы открыть кабинет.");
+          return null;
+        }
         if (!response.ok) {
           throw new Error("no");
         }
         return response.json();
       })
-      .then((data: Cabinet) => setCabinet(data))
-      .catch(() => setError("Кабинет временно недоступен."));
+      .then((data: Cabinet | null) => {
+        if (data) {
+          setCabinet(data);
+        }
+      })
+      .catch(() => setError("Списки кабинета пока не загрузились."));
   }, [ready, token, revision]);
 
-  const user = cabinet?.user;
+  const user = cabinet?.user ?? sessionUser;
 
   return (
     <section className="px-9 py-12 md:px-[25.2rem] md:py-16 lg:px-[33.6rem]">
       <p className="text-[11px] font-light uppercase tracking-[0.32em] text-[#1A1A1A]/55">Личный кабинет</p>
+      {ready && !token ? <p className="mt-8 text-sm font-light leading-7">Войдите, чтобы открыть кабинет.</p> : null}
       {error ? <p className="mt-8 text-sm font-light leading-7">{error}</p> : null}
       {!user ? null : (
         <>
@@ -379,25 +388,29 @@ function CabinetBody() {
               <dt>Телефон</dt>
               <dd>{user.phone}</dd>
             </div>
-            {cabinet.kind === "master" ? (
+            {user.role !== "customer" ? (
               <div className="border-t border-[#E6E6E6] py-3">
                 <dt>Резюме</dt>
                 <dd className="mt-2 max-w-xl">{user.description || "Резюме пока не заполнено."}</dd>
               </div>
             ) : null}
           </dl>
-          <Notices notices={cabinet.notices ?? []} />
-          {cabinet.kind === "master" ? (
-            <MasterCabinet
-              portfolios={cabinet.portfolios ?? []}
-              products={cabinet.products ?? []}
-              responses={cabinet.responses ?? []}
-              dialogs={cabinet.dialogs}
-              onProductCreated={() => setRevision((current) => current + 1)}
-            />
-          ) : (
-            <CustomerCabinet tasks={cabinet.tasks ?? []} dialogs={cabinet.dialogs} />
-          )}
+          {cabinet ? (
+            <>
+              <Notices notices={cabinet.notices ?? []} />
+              {cabinet.kind === "master" ? (
+                <MasterCabinet
+                  portfolios={cabinet.portfolios ?? []}
+                  products={cabinet.products ?? []}
+                  responses={cabinet.responses ?? []}
+                  dialogs={cabinet.dialogs}
+                  onProductCreated={() => setRevision((current) => current + 1)}
+                />
+              ) : (
+                <CustomerCabinet tasks={cabinet.tasks ?? []} dialogs={cabinet.dialogs} />
+              )}
+            </>
+          ) : null}
           <button
             type="button"
             onClick={logout}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
 import { useAccount, type SessionUser } from "./account-provider";
 
 const fieldClass =
@@ -125,7 +124,6 @@ export function MasterRegister({
   initialKind?: Kind;
   initialSpecialty?: (typeof specialties)[number][0];
 }) {
-  const router = useRouter();
   const { setSession } = useAccount();
   const sending = useRef(false);
   const [kind, setKind] = useState<Kind>(initialKind);
@@ -268,7 +266,7 @@ export function MasterRegister({
         return;
       }
       setSession(data.token, data.user as SessionUser);
-      router.push("/account");
+      window.location.assign("/account");
     } catch {
       setFormError("Регистрация временно недоступна.");
       sending.current = false;
