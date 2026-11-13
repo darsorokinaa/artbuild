@@ -695,8 +695,15 @@ def register(request):
         return Response({'detail': 'Укажите телефон.'}, status=400)
     if len(fields['password']) < 8:
         return Response({'detail': 'Пароль должен быть не короче 8 символов.'}, status=400)
-    if User.objects.filter(email__iexact=fields['email']).exists():
-        return Response({'detail': 'Такая почта уже зарегистрирована.'}, status=400)
+    existing = list(User.objects.filter(email__iexact=fields['email']))
+    if existing:
+        matched = next((item for item in existing if item.check_password(fields['password'])), None)
+        if matched is not None:
+            return Response({'token': issue_token(matched), 'user': account_payload(matched)})
+        return Response(
+            {'detail': 'Эта почта уже зарегистрирована. Войдите с паролем, который указывали при создании аккаунта.'},
+            status=400,
+        )
     if User.objects.filter(phone=fields['phone']).exists():
         return Response({'detail': 'Такой телефон уже зарегистрирован.'}, status=400)
     materials = None
@@ -737,8 +744,11 @@ def register(request):
 def login(request):
     email = str(request.data.get('email') or '').strip().lower()
     password = str(request.data.get('password') or '')
-    user = User.objects.filter(email__iexact=email).first()
-    if user is None or not user.check_password(password):
+    user = next(
+        (item for item in User.objects.filter(email__iexact=email) if item.check_password(password)),
+        None,
+    )
+    if user is None:
         return Response({'detail': 'Неверная почта или пароль.'}, status=400)
     return Response({'token': issue_token(user), 'user': account_payload(user)})
 

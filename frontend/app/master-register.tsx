@@ -246,20 +246,19 @@ export function MasterRegister({
       const data = await response.json();
       if (!response.ok) {
         const detail = data.detail || "Не удалось зарегистрироваться.";
-        if (detail.includes("почт")) {
-          setFieldErrors({ email: detail });
-          setStep(1);
-        } else if (detail.includes("телефон")) {
-          setFieldErrors({ phone: detail });
-          setStep(1);
-        } else if (detail.includes("Пароль")) {
-          setFieldErrors({ password: detail });
+        setFormError(detail);
+        if (detail.includes("почт") || detail.includes("телефон") || detail.includes("Пароль")) {
+          setFieldErrors(
+            detail.includes("телефон")
+              ? { phone: detail }
+              : detail.includes("Пароль")
+                ? { password: detail }
+                : { email: detail },
+          );
           setStep(1);
         } else if (detail.includes("резюме") || detail.includes("специальность")) {
           setFieldErrors({ description: detail });
           setStep(2);
-        } else {
-          setFormError(detail);
         }
         sending.current = false;
         setPending(false);
@@ -325,6 +324,7 @@ export function MasterRegister({
       <div className="mt-10">
         <Progress step={step} onStep={goTo} />
       </div>
+      {formError ? <p className="mt-6 max-w-xl text-sm leading-6 text-[#242424]">{formError}</p> : null}
 
       {step === 1 ? (
         <form
