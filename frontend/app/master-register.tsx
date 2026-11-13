@@ -431,9 +431,9 @@ export function MasterRegister({
   const wide = step > 1;
 
   return (
-    <div className={wide ? "" : "lg:grid lg:grid-cols-[minmax(0,650px)_minmax(0,1fr)]"}>
-      <div className="px-[1.875rem] py-10 sm:px-[3.75rem] lg:px-[29.4rem] lg:py-16">
-    <div className={`mx-auto w-full pb-24 ${wide ? "max-w-3xl" : "max-w-[560px]"}`}>
+    <div className={wide ? "" : "lg:grid lg:grid-cols-[minmax(0,44rem)_minmax(0,1fr)]"}>
+      <div className={wide ? "px-8 py-12 sm:px-12 md:px-[16.8rem] md:py-16" : "px-8 py-12 sm:px-12 lg:px-16 lg:py-16"}>
+    <div className={`w-full pb-24 ${wide ? "mx-auto max-w-3xl" : ""}`}>
       <p className="text-[11px] tracking-[0.28em] text-[#767676]">
         <span className="lowercase">naidista</span>
         <span className="uppercase"> / Создание профиля</span>
@@ -491,7 +491,7 @@ export function MasterRegister({
             }
           }}
         >
-          <div className="grid grid-cols-1 gap-x-8 gap-y-6 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2">
             <Field label="Имя" error={fieldErrors.firstName}>
               <input
                 name="first_name"
